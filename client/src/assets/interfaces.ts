@@ -1,4 +1,4 @@
-interface Property {
+export interface Property {
   name: string;
   price: number;
   rent: number[];
@@ -10,7 +10,7 @@ interface Property {
   housePrice?: number;
 }
 
-interface Player {
+export interface Player {
   id: number;
   name: string;
   position: number;
