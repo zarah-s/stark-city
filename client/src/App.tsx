@@ -15,6 +15,55 @@ import {
 import { io, Socket } from "socket.io-client";
 
 export default function StarkCityGame() {
+  // Splash Screen
+  if (showSplash) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-black flex items-center justify-center overflow-hidden relative">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiM0QzFENzkiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yLjIxIDEuNzktNCA0LTRzNCAxLjc5IDQgNC0xLjc5IDQtNCA0LTQtMS43OS00LTR6bTAgMTBjMC0yLjIxIDEuNzktNCA0LTRzNCAxLjc5IDQgNC0xLjc5IDQtNCA0LTQtMS43OS00LTR6bTEwIDBjMC0yLjIxIDEuNzktNCA0LTRzNCAxLjc5IDQgNC0xLjc5IDQtNCA0LTQtMS43OS00LTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-20"></div>
+
+        <div className="text-center z-10 animate-pulse">
+          <div className="mb-8 relative">
+            <Sparkles className="w-24 h-24 mx-auto text-yellow-400 animate-spin-slow" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Building2 className="w-12 h-12 text-purple-400" />
+            </div>
+          </div>
+
+          <h1
+            className="text-7xl font-black mb-4 bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-600 text-transparent bg-clip-text animate-gradient"
+            style={{
+              fontFamily: "'Press Start 2P', 'Orbitron', cursive, monospace",
+            }}
+          >
+            STARKCITY
+          </h1>
+
+          <p
+            className="text-2xl font-bold text-purple-300 mb-8 animate-bounce"
+            style={{ fontFamily: "'Bangers', cursive" }}
+          >
+            Build Your Empire!
+          </p>
+
+          <div className="flex gap-2 justify-center">
+            <div
+              className="w-3 h-3 bg-yellow-400 rounded-full animate-bounce"
+              style={{ animationDelay: "0s" }}
+            ></div>
+            <div
+              className="w-3 h-3 bg-pink-400 rounded-full animate-bounce"
+              style={{ animationDelay: "0.2s" }}
+            ></div>
+            <div
+              className="w-3 h-3 bg-purple-400 rounded-full animate-bounce"
+              style={{ animationDelay: "0.4s" }}
+            ></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (gameMode === "menu") {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex items-center justify-center p-4 relative overflow-hidden">
