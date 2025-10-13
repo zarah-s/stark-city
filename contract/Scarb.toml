@@ -38,3 +38,5 @@ icon_uri = "file://assets/icon.png"
 [world]
 name = "starkcity"
 seed = "starkcity"
+
+[profile.sepolia]
