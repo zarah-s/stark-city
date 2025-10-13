@@ -15,6 +15,453 @@ import {
 import { io, Socket } from "socket.io-client";
 
 export default function StarkCityGame() {
+  const [showSplash, setShowSplash] = useState(true);
+  const [gameMode, setGameMode] = useState<"menu" | "computer" | "online">(
+    "menu"
+  );
+  const [gameStarted, setGameStarted] = useState(false);
+
+  const [playerName, setPlayerName] = useState("");
+  const [roomCode, setRoomCode] = useState("");
+  const [isHost, setIsHost] = useState(false);
+  const [connectedPlayers, setConnectedPlayers] = useState<any[]>([]);
+  const [copied, setCopied] = useState(false);
+  const socketRef = useRef<Socket | null>(null);
+  const [myPlayerId, setMyPlayerId] = useState<number>(0);
+  const [showJoinInput, setShowJoinInput] = useState(false);
+
+  const [selectedPiece, setSelectedPiece] = useState("");
+  const [gameProperties, setGameProperties] = useState<Property[]>(properties);
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [currentPlayer, setCurrentPlayer] = useState(0);
+  const [dice, setDice] = useState<[number, number]>([1, 1]);
+  const [message, setMessage] = useState("Choose your game mode!");
+  const [gameLog, setGameLog] = useState<string[]>([]);
+  const [showBuyModal, setShowBuyModal] = useState(false);
+  const [currentProperty, setCurrentProperty] = useState<Property | null>(null);
+  const [showProperties, setShowProperties] = useState(false);
+  const [isRolling, setIsRolling] = useState(false);
+  const [canRoll, setCanRoll] = useState(false);
+  const [showManageProperties, setShowManageProperties] = useState(false);
+  const [turnTimer, setTurnTimer] = useState(20);
+  const timerRef = useRef<any>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const addLog = (msg: string) => {
+    setGameLog((prev) => [...prev.slice(-4), msg]);
+  };
+
+  // Start turn timer for online mode
+  const startTurnTimer = () => {
+    if (gameMode !== "online") return;
+
+    setTurnTimer(20);
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+
+    timerRef.current = setInterval(() => {
+      setTurnTimer((prev) => {
+        if (prev <= 1) {
+          if (timerRef.current) {
+            clearInterval(timerRef.current);
+          }
+          // Auto skip turn
+          if (socketRef.current && currentPlayer === myPlayerId && canRoll) {
+            socketRef.current.emit("skipTurn", {
+              roomCode,
+              playerId: myPlayerId,
+            });
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  // Stop turn timer
+  const stopTurnTimer = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    setTurnTimer(20);
+  };
+
+  // Effect to handle turn timer in online mode
+  useEffect(() => {
+    if (
+      gameMode === "online" &&
+      gameStarted &&
+      currentPlayer === myPlayerId &&
+      canRoll &&
+      !showBuyModal
+    ) {
+      startTurnTimer();
+    } else {
+      stopTurnTimer();
+    }
+
+    return () => {
+      stopTurnTimer();
+    };
+  }, [gameMode, gameStarted, currentPlayer, myPlayerId, canRoll, showBuyModal]);
+
+  // Check if player owns all properties of a color group
+  const ownsMonopoly = (playerId: number, color: string): boolean => {
+    const colorProperties = gameProperties.filter(
+      (p) => p.color === color && p.type === "property"
+    );
+    return colorProperties.every((p) => p.owner === playerId);
+  };
+
+  // Buy house or hotel
+  const buyHouse = (propertyIndex: number) => {
+    const prop = gameProperties[propertyIndex];
+    if (!prop || prop.type !== "property" || !prop.housePrice) return;
+
+    if (gameMode === "online") {
+      if (socketRef.current) {
+        socketRef.current.emit("buyHouse", {
+          roomCode,
+          propertyPosition: propertyIndex,
+          playerId: myPlayerId,
+        });
+      }
+      return;
+    }
+
+    const player = players[currentPlayer];
+    if (prop.owner !== currentPlayer) return;
+    if (!ownsMonopoly(currentPlayer, prop.color)) {
+      setMessage("Need monopoly to build!");
+      addLog("Need all properties of this color");
+      return;
+    }
+    if (prop.houses >= 5) {
+      setMessage("Already has hotel!");
+      return;
+    }
+    if (player.money < prop.housePrice) {
+      setMessage("Not enough money!");
+      return;
+    }
+
+    const newPlayers = [...players];
+    newPlayers[currentPlayer].money -= prop.housePrice;
+    setPlayers(newPlayers);
+
+    const newProps = [...gameProperties];
+    newProps[propertyIndex].houses += 1;
+    setGameProperties(newProps);
+
+    const buildingName =
+      newProps[propertyIndex].houses === 5 ? "hotel" : "house";
+    addLog(`Built ${buildingName} on ${prop.name}`);
+    setMessage(`Built ${buildingName}!`);
+  };
+
+  // Sell house or hotel
+  const sellHouse = (propertyIndex: number) => {
+    const prop = gameProperties[propertyIndex];
+    if (!prop || prop.type !== "property" || !prop.housePrice) return;
+
+    if (gameMode === "online") {
+      if (socketRef.current) {
+        socketRef.current.emit("sellHouse", {
+          roomCode,
+          propertyPosition: propertyIndex,
+          playerId: myPlayerId,
+        });
+      }
+      return;
+    }
+
+    const player = players[currentPlayer];
+    if (prop.owner !== currentPlayer) return;
+    if (prop.houses === 0) return;
+
+    const newPlayers = [...players];
+    newPlayers[currentPlayer].money += Math.floor(prop.housePrice / 2);
+    setPlayers(newPlayers);
+
+    const newProps = [...gameProperties];
+    const wasHotel = newProps[propertyIndex].houses === 5;
+    newProps[propertyIndex].houses -= 1;
+    setGameProperties(newProps);
+
+    const buildingName = wasHotel ? "hotel" : "house";
+    addLog(`Sold ${buildingName} on ${prop.name}`);
+    setMessage(`Sold ${buildingName}!`);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+      }
+    };
+  }, []);
+
+  const createRoom = () => {
+    if (!playerName.trim()) return;
+    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+    connectSocket(code, playerName, true);
+  };
+
+  const joinRoom = (roomCode: string) => {
+    if (!roomCode.trim() || !playerName.trim()) return;
+    connectSocket(roomCode, playerName, false);
+  };
+
+  const startOnlineGame = () => {
+    if (!isHost || connectedPlayers.length < 2) return;
+    if (socketRef.current) {
+      socketRef.current.emit("startGame", { roomCode });
+    }
+  };
+
+  const copyRoomCode = () => {
+    navigator.clipboard.writeText(roomCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const startComputerGame = (piece: string) => {
+    const compPiece = availablePieces.filter((p) => p !== piece)[0];
+    setPlayers([
+      {
+        id: 0,
+        name: "You",
+        position: 0,
+        money: 1500,
+        properties: [],
+        color: "bg-blue-600",
+        piece,
+        isComputer: false,
+      },
+      {
+        id: 1,
+        name: "AI",
+        position: 0,
+        money: 1500,
+        properties: [],
+        color: "bg-red-600",
+        piece: compPiece,
+        isComputer: true,
+      },
+    ]);
+    setGameStarted(true);
+    setGameMode("computer");
+    setCurrentPlayer(0);
+    setCanRoll(true);
+    setMessage("Your turn!");
+  };
+
+  const playDiceSound = () => {
+    try {
+      const ctx = new (window.AudioContext ||
+        (window as any).webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = 200;
+      gain.gain.value = 0.1;
+      osc.start();
+      setTimeout(() => {
+        osc.frequency.value = 300;
+      }, 50);
+      setTimeout(() => {
+        osc.stop();
+      }, 150);
+    } catch {}
+  };
+
+  useEffect(() => {
+    if (
+      gameStarted &&
+      gameMode === "computer" &&
+      players[currentPlayer]?.isComputer &&
+      canRoll &&
+      !showBuyModal
+    ) {
+      setTimeout(rollDice, 1500);
+    }
+  }, [currentPlayer, canRoll, showBuyModal, gameStarted, gameMode]);
+
+  const computerDecision = (prop: Property) => {
+    setTimeout(() => {
+      const afford = (players[1].money - prop.price) / players[1].money;
+      const buy =
+        players[1].money >= prop.price &&
+        (prop.price < 150
+          ? Math.random() > 0.2
+          : afford > 0.5
+          ? Math.random() > 0.3
+          : afford > 0.3
+          ? Math.random() > 0.5
+          : Math.random() > 0.7);
+      setTimeout(() => (buy ? buyProperty(prop) : skipProperty()), 800);
+    }, 500);
+  };
+
+  const rollDice = () => {
+    if (!canRoll || isRolling) return;
+    // stopTurnTimer();
+    playDiceSound();
+    if (gameMode === "online") {
+      if (currentPlayer !== myPlayerId) return;
+      if (socketRef.current) {
+        socketRef.current.emit("rollDice", { roomCode, playerId: myPlayerId });
+      }
+      return;
+    }
+
+    setIsRolling(true);
+    setCanRoll(false);
+
+    const die1 = Math.floor(Math.random() * 6) + 1;
+    const die2 = Math.floor(Math.random() * 6) + 1;
+    setDice([die1, die2]);
+
+    setTimeout(() => {
+      const total = die1 + die2;
+      const newPlayers = [...players];
+      const player = newPlayers[currentPlayer];
+      let newPos = player.position + total;
+
+      if (newPos >= 40) {
+        player.money += 200;
+        addLog(`${player.name} passed GO! +$200`);
+        newPos = newPos % 40;
+      }
+
+      player.position = newPos;
+      const prop = gameProperties[newPos];
+
+      if (prop.name === "Go To Jail") {
+        player.position = 10;
+        addLog(`${player.name} to Jail!`);
+        setPlayers(newPlayers);
+        setIsRolling(false);
+        setTimeout(() => {
+          setCurrentPlayer((currentPlayer + 1) % players.length);
+          setCanRoll(true);
+        }, 2000);
+        return;
+      } else if (prop.name === "Income Tax") {
+        player.money -= 200;
+        addLog(`${player.name} paid $200 tax`);
+      } else if (prop.name === "Luxury Tax") {
+        player.money -= 100;
+        addLog(`${player.name} paid $100 tax`);
+      } else if (prop.price > 0) {
+        if (prop.owner === null) {
+          setCurrentProperty(prop);
+          setShowBuyModal(true);
+          if (player.isComputer) computerDecision(prop);
+          setPlayers(newPlayers);
+          setIsRolling(false);
+          return;
+        } else if (prop.owner !== currentPlayer) {
+          const rent = prop.rent[prop.houses];
+          player.money -= rent;
+          newPlayers[prop.owner].money += rent;
+          addLog(`Paid ${rent} rent`);
+          if (prop.houses > 0) {
+            const buildingType =
+              prop.houses === 5
+                ? "hotel"
+                : `${prop.houses} house${prop.houses > 1 ? "s" : ""}`;
+            addLog(`Property has ${buildingType}`);
+          }
+        }
+      } else if (prop.name === "Chance" || prop.name === "Community Chest") {
+        const amt = Math.random() > 0.5 ? 50 : -50;
+        player.money += amt;
+        addLog(`${amt > 0 ? "+" : ""}${amt}`);
+      }
+
+      setPlayers(newPlayers);
+      setIsRolling(false);
+
+      setTimeout(() => {
+        setCurrentPlayer((currentPlayer + 1) % players.length);
+        setCanRoll(true);
+      }, 2000);
+    }, 1000);
+  };
+
+  const buyProperty = (prop: Property) => {
+    if (!prop) return;
+
+    if (gameMode === "online") {
+      if (socketRef.current) {
+        socketRef.current.emit("buyProperty", {
+          roomCode,
+          propertyPosition: prop.position,
+          playerId: myPlayerId,
+        });
+      }
+      return;
+    }
+
+    const newPlayers = [...players];
+    const player = newPlayers[currentPlayer];
+
+    if (player.money >= prop.price) {
+      player.money -= prop.price;
+      player.properties.push(prop.position);
+
+      const newProps = [...gameProperties];
+      newProps[prop.position].owner = currentPlayer;
+      setGameProperties(newProps);
+
+      addLog(`${player.name} bought ${prop.name}`);
+      setPlayers(newPlayers);
+    }
+
+    setShowBuyModal(false);
+    setCurrentProperty(null);
+
+    if (gameMode === "computer") {
+      setTimeout(() => {
+        setCurrentPlayer((currentPlayer + 1) % players.length);
+        setCanRoll(true);
+      }, 1500);
+    }
+  };
+
+  const skipProperty = () => {
+    if (gameMode === "online") {
+      if (socketRef.current) {
+        socketRef.current.emit("skipProperty", {
+          roomCode,
+          playerId: myPlayerId,
+        });
+      }
+      return;
+    }
+
+    setShowBuyModal(false);
+    setCurrentProperty(null);
+
+    if (gameMode === "computer") {
+      setTimeout(() => {
+        setCurrentPlayer((currentPlayer + 1) % players.length);
+        setCanRoll(true);
+      }, 1500);
+    }
+  };
+
   // Splash Screen
   if (showSplash) {
     return (
