@@ -202,6 +202,179 @@ export default function StarkCityGame() {
     setMessage(`Sold ${buildingName}!`);
   };
 
+  const connectSocket = (room: string, name: string, host: boolean) => {
+    const socket = io(SOCKET_SERVER_URL, {
+      transports: ["websocket"],
+      reconnection: true,
+    });
+
+    socket.on("connect", () => {
+      console.log("✅ Connected");
+      socket.emit("joinRoom", { room, name, isHost: host });
+    });
+
+    socket.on("roomJoined", (data: any) => {
+      setConnectedPlayers(data.players);
+      setMyPlayerId(data.playerId);
+      setRoomCode(data.roomCode);
+      setIsHost(data.isHost);
+      addLog(`You joined`);
+      setMessage(`Room: ${data.roomCode}`);
+    });
+
+    socket.on("playerJoined", (data: any) => {
+      setConnectedPlayers(data.players);
+      addLog(`${data.playerName} joined`);
+    });
+
+    socket.on("gameStarted", (data: any) => {
+      setPlayers(data.players);
+      setGameStarted(true);
+      setCurrentPlayer(data.currentPlayer);
+      setCanRoll(data.currentPlayer === myPlayerId);
+      setMessage(`${data.players[data.currentPlayer].name}'s turn`);
+    });
+
+    socket.on("fullGameState", (state: any) => {
+      const myPlayer = state.players.find(
+        (fd: any) => fd.socketId.toLowerCase() === socket.id?.toLowerCase()
+      );
+      if (!myPlayer) {
+        return;
+      }
+      const myPlayerId = myPlayer.id;
+      setGameProperties(state.properties);
+      setPlayers(state.players);
+      setCurrentPlayer(state.currentPlayer);
+      setDice(state.dice);
+      setGameLog(state.gameLog);
+      setGameStarted(state.gameStarted);
+      setCanRoll(
+        state.currentPlayer === myPlayerId &&
+          state.gameStarted &&
+          !state.turnInProgress
+      );
+    });
+
+    socket.on("diceRolled", (data: any) => {
+      setDice(data.dice);
+      setIsRolling(true);
+      setCanRoll(false);
+      playDiceSound();
+      addLog(`${data.playerName} rolled ${data.dice[0]}+${data.dice[1]}`);
+      setTimeout(() => setIsRolling(false), 1000);
+    });
+
+    socket.on("playerMoved", (data: any) => {
+      const newPlayers = [...players];
+      if (newPlayers[data.playerId]) {
+        newPlayers[data.playerId].position = data.newPosition;
+        newPlayers[data.playerId].money = data.newMoney;
+        setPlayers(newPlayers);
+        if (data.message) {
+          setMessage(data.message);
+          addLog(data.message);
+        }
+      }
+    });
+
+    socket.on("propertyLanded", (data: any) => {
+      const myPlayer = data.players.find(
+        (fd: any) => fd.socketId.toLowerCase() === socket.id?.toLowerCase()
+      );
+      if (!myPlayer) {
+        return;
+      }
+      const myPlayerId = myPlayer.id;
+      if (data.playerId === myPlayerId) {
+        const prop = gameProperties[data.propertyPosition];
+        setCurrentProperty(prop);
+        setShowBuyModal(true);
+        setMessage(`Buy ${data.propertyName}?`);
+        setCanRoll(false);
+      }
+    });
+
+    socket.on("propertyPurchased", (data: any) => {
+      const newProperties = [...gameProperties];
+      newProperties[data.propertyPosition].owner = data.playerId;
+      setGameProperties(newProperties);
+
+      const newPlayers = [...players];
+      if (newPlayers[data.playerId]) {
+        newPlayers[data.playerId].money = data.newMoney;
+        newPlayers[data.playerId].properties.push(data.propertyPosition);
+        setPlayers(newPlayers);
+      }
+
+      addLog(`${data.playerName} bought ${data.propertyName}`);
+      setShowBuyModal(false);
+      setCurrentProperty(null);
+    });
+
+    socket.on("propertySkipped", () => {
+      setShowBuyModal(false);
+      setCurrentProperty(null);
+    });
+
+    socket.on("turnChanged", (data: any) => {
+      setCurrentPlayer(data.currentPlayer);
+      setCanRoll(data.currentPlayer === myPlayerId);
+      setMessage(`${data.playerName}'s turn`);
+      // stopTurnTimer();
+    });
+
+    socket.on("houseBought", (data: any) => {
+      const newProperties = [...gameProperties];
+      newProperties[data.propertyPosition].houses = data.houses;
+      setGameProperties(newProperties);
+
+      const newPlayers = [...players];
+      if (newPlayers[data.playerId]) {
+        newPlayers[data.playerId].money = data.newMoney;
+        setPlayers(newPlayers);
+      }
+
+      addLog(
+        `${data.playerName} built ${data.buildingName} on ${data.propertyName}`
+      );
+      setMessage(`${data.playerName} built ${data.buildingName}!`);
+    });
+
+    socket.on("houseSold", (data: any) => {
+      const newProperties = [...gameProperties];
+      newProperties[data.propertyPosition].houses = data.houses;
+      setGameProperties(newProperties);
+
+      const newPlayers = [...players];
+      if (newPlayers[data.playerId]) {
+        newPlayers[data.playerId].money = data.newMoney;
+        setPlayers(newPlayers);
+      }
+
+      addLog(
+        `${data.playerName} sold ${data.buildingName} on ${data.propertyName}`
+      );
+      setMessage(`${data.playerName} sold ${data.buildingName}!`);
+    });
+
+    socket.on("playerLeft", (data: any) => {
+      setConnectedPlayers(data.players);
+      addLog(`Player left`);
+    });
+
+    socket.on("gameEnded", (data: any) => {
+      setMessage(data.message);
+      setGameStarted(false);
+    });
+
+    socket.on("error", (error: any) => {
+      setMessage(error.message);
+    });
+
+    socketRef.current = socket;
+  };
+
   useEffect(() => {
     return () => {
       if (socketRef.current) {
