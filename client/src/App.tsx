@@ -13,6 +13,8 @@ import {
   Sparkles,
 } from "lucide-react";
 import { io, Socket } from "socket.io-client";
+import { SOCKET_SERVER_URL } from "./assets/constants";
+import { Player, Property } from "./assets/interfaces";
 
 export default function StarkCityGame() {
   const [showSplash, setShowSplash] = useState(true);
