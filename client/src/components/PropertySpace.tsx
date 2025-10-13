@@ -1,4 +1,4 @@
-import { Player, Property } from "../assets/interfaces";
+import type { Player, Property } from "../utils/interfaces";
 
 export const PropertySpace = ({
   prop,

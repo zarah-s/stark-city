@@ -13,10 +13,30 @@ import {
   Sparkles,
 } from "lucide-react";
 import { io, Socket } from "socket.io-client";
-import { SOCKET_SERVER_URL } from "./assets/constants";
-import { Player, Property } from "./assets/interfaces";
+import {
+  AVAILABLE_PIECES,
+  PROPERTIES,
+  SOCKET_SERVER_URL,
+} from "./utils/constants";
+import type { Player, Property } from "./utils/interfaces";
+import { PropertySpace } from "./components/PropertySpace";
+import { DiceIcon } from "./components/DiceIcon";
+import type { AccountInterface } from "starknet";
+import { useAccount, useConnect, useDisconnect } from "@starknet-react/core";
 
-export default function StarkCityGame() {
+interface Wallet {
+  IsConnected: boolean;
+  Account: AccountInterface | undefined;
+}
+
+declare global {
+  interface Window {
+    Wallet: Wallet;
+  }
+}
+export default function App() {
+  const { account } = useAccount();
+  const { connectAsync, connectors } = useConnect();
   const [showSplash, setShowSplash] = useState(true);
   const [gameMode, setGameMode] = useState<"menu" | "computer" | "online">(
     "menu"
@@ -33,7 +53,7 @@ export default function StarkCityGame() {
   const [showJoinInput, setShowJoinInput] = useState(false);
 
   const [selectedPiece, setSelectedPiece] = useState("");
-  const [gameProperties, setGameProperties] = useState<Property[]>(properties);
+  const [gameProperties, setGameProperties] = useState<Property[]>(PROPERTIES);
   const [players, setPlayers] = useState<Player[]>([]);
   const [currentPlayer, setCurrentPlayer] = useState(0);
   const [dice, setDice] = useState<[number, number]>([1, 1]);
@@ -47,6 +67,38 @@ export default function StarkCityGame() {
   const [showManageProperties, setShowManageProperties] = useState(false);
   const [turnTimer, setTurnTimer] = useState(20);
   const timerRef = useRef<any>(null);
+
+  /// CONNECT WALLET AND ENTER GAME
+
+  async function enterGame(mode: "computer" | "online") {
+    try {
+      console.log(window.Wallet);
+      if (!window.Wallet?.IsConnected) {
+        console.log("connected here");
+        await connectAsync({ connector: connectors[0] });
+      }
+      setGameMode(mode);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  useEffect(() => {
+    (async function () {
+      try {
+        if (showSplash) return;
+        if (!account) return;
+        if (window.Wallet?.Account) return;
+        window.Wallet = {
+          Account: account,
+          IsConnected: true,
+        };
+        console.log(window.Wallet);
+      } catch (error) {
+        console.error(error);
+      }
+    })();
+  }, [showSplash, account]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -410,7 +462,7 @@ export default function StarkCityGame() {
   };
 
   const startComputerGame = (piece: string) => {
-    const compPiece = availablePieces.filter((p) => p !== piece)[0];
+    const compPiece = AVAILABLE_PIECES.filter((p) => p !== piece)[0];
     setPlayers([
       {
         id: 0,
@@ -711,7 +763,7 @@ export default function StarkCityGame() {
 
           <div className="space-y-4">
             <button
-              onClick={() => setGameMode("computer")}
+              onClick={() => enterGame("computer")}
               className="group w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white p-6 rounded-xl transition-all transform hover:scale-105 shadow-lg border-4 border-blue-800 hover:border-cyan-400 relative overflow-hidden"
             >
               <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity"></div>
@@ -732,7 +784,7 @@ export default function StarkCityGame() {
             </button>
 
             <button
-              onClick={() => setGameMode("online")}
+              onClick={() => enterGame("online")}
               className="group w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white p-6 rounded-xl transition-all transform hover:scale-105 shadow-lg border-4 border-green-800 hover:border-emerald-400 relative overflow-hidden"
             >
               <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity"></div>
@@ -943,7 +995,7 @@ export default function StarkCityGame() {
             CHOOSE YOUR PIECE
           </h1>
           <div className="grid grid-cols-4 gap-4">
-            {availablePieces.map((piece) => (
+            {AVAILABLE_PIECES.map((piece) => (
               <button
                 key={piece}
                 onClick={() => startComputerGame(piece)}

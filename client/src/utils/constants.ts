@@ -1,6 +1,6 @@
-import { Property } from "./interfaces";
+import type { Property } from "./interfaces";
 
-export const properties: Property[] = [
+export const PROPERTIES: Property[] = [
   {
     name: "GO",
     price: 0,
@@ -425,8 +425,17 @@ export const properties: Property[] = [
   },
 ];
 
-export const availablePieces = ["🚗", "🎩", "🚢", "🐕", "🐈", "👞", "🎸", "⚓"];
-export const playerColors = [
+export const AVAILABLE_PIECES = [
+  "🚗",
+  "🎩",
+  "🚢",
+  "🐕",
+  "🐈",
+  "👞",
+  "🎸",
+  "⚓",
+];
+export const PLAYER_COLORS = [
   "bg-blue-600",
   "bg-red-600",
   "bg-green-600",
@@ -434,3 +443,5 @@ export const playerColors = [
 ];
 
 export const SOCKET_SERVER_URL = "http://localhost:9000";
+export const WORLD_ADDRESS =
+  "0x5a15193daf70b6dfcbf7260c7323791e7a5fd3b90ef95150fe810d98199ca70";
