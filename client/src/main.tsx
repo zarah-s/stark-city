@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.tsx";
+import { ToastContainer } from "react-toastify";
 import { StarknetProvider } from "./utils/StarknetProvider.tsx";
 // Dojo imports
 import { init } from "@dojoengine/sdk";
@@ -19,6 +20,7 @@ async function main() {
       worldAddress: dojoConfig.manifest.world.address,
       // Optional: Torii indexer URL (defaults to http://localhost:8080)
       toriiUrl: dojoConfig.toriiUrl || "http://localhost:8080",
+
       // Optional: Relay URL for real-time messaging
       // relayUrl: dojoConfig.relayUrl || "/ip4/127.0.0.1/tcp/9090",
     },
@@ -40,6 +42,7 @@ async function main() {
           clientFn={setupWorld}
         >
           <App />
+          <ToastContainer />
         </DojoSdkProvider>
       </StarknetProvider>
     </StrictMode>
