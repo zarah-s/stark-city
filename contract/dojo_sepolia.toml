@@ -20,4 +20,4 @@ rpc_url = "https://api.cartridge.gg/x/starknet/sepolia"
 
 
 [writers]
-"dojo_starter" = ["dojo_starter-actions"]
+"starkcity" = ["starkcity-actions"]
