@@ -63,11 +63,11 @@ const connector = new ControllerConnector({
   feeSource: FeeSource.PAYMASTER,
   namespace: "starkcity",
   slot: "starkcity",
-  chains: [
-    {
-      rpcUrl: "https://api.cartridge.gg/x/starknet/sepolia",
-    },
-  ],
+  // chains: [
+  //   {
+  //     rpcUrl: "https://api.cartridge.gg/x/starknet/sepolia",
+  //   },
+  // ],
 });
 
 // Configure RPC provider

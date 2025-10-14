@@ -1,5 +1,5 @@
 import type { Property } from "./interfaces";
-
+import manifest from "./manifest_sepolia.json";
 export const PROPERTIES: Property[] = [
   {
     name: "GO",
@@ -443,5 +443,4 @@ export const PLAYER_COLORS = [
 ];
 
 export const SOCKET_SERVER_URL = "http://localhost:9000";
-export const WORLD_ADDRESS =
-  "0x5a15193daf70b6dfcbf7260c7323791e7a5fd3b90ef95150fe810d98199ca70";
+export const WORLD_ADDRESS = manifest.world.address;
