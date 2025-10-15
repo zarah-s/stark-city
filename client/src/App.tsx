@@ -1542,7 +1542,7 @@ export default function App() {
       )}
 
       {showProperties && (
-        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-2 sm:p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 bg-[rgba(0,0,0,.5)] flex items-center justify-center z-50 p-2 sm:p-4 backdrop-blur-sm">
           <div className="bg-gradient-to-br from-gray-900 to-black rounded-2xl p-4 sm:p-6 max-w-4xl w-full max-h-[85vh] flex flex-col shadow-2xl border-4 border-blue-500">
             <div className="flex justify-between items-center mb-4">
               <h2
