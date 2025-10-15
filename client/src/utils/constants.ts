@@ -442,5 +442,5 @@ export const PLAYER_COLORS = [
   "bg-yellow-600",
 ];
 
-export const SOCKET_SERVER_URL = "https://starkcity-tl4b.vercel.app";
+export const SOCKET_SERVER_URL = "https://starkcity.onrender.com";
 export const WORLD_ADDRESS = manifest.contracts[0].address;
