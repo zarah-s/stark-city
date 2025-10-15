@@ -932,7 +932,7 @@ export default function App() {
           </h1>
           <p className="text-center text-cyan-200 mb-8 font-bold">{message}</p>
 
-          {!roomCode ? (
+          {!roomCode || roomCode.length !== 6 ? (
             <div className="space-y-6">
               <div>
                 <label
@@ -976,8 +976,8 @@ export default function App() {
                     type="text"
                     value={roomCode}
                     onChange={(e) => {
+                      setRoomCode(e.target.value.toUpperCase());
                       if (e.target.value.trim().length == 6) {
-                        setRoomCode(e.target.value.toUpperCase());
                         joinRoom(e.target.value.trim().toUpperCase());
                       }
                     }}
