@@ -1480,7 +1480,7 @@
   "contracts": [
     {
       "address": "0x128d5e9692d1c162ed7a7992403c413f18a3baf5e32a5905877273d0c1952e2",
-      "class_hash": "0x1f5dbc08e2d3364a036368eb779fbbadc45c8c1310c4c62f9fca7bd612895b1",
+      "class_hash": "0x29541d585c2850b35a4dc6ac5621a80afc4d2df9bd1c0c9ae6dfe9bcb097592",
       "abi": [
         {
           "type": "impl",
@@ -1688,6 +1688,18 @@
               ],
               "outputs": [],
               "state_mutability": "external"
+            },
+            {
+              "type": "function",
+              "name": "set_owner",
+              "inputs": [
+                {
+                  "name": "owner",
+                  "type": "core::starknet::contract_address::ContractAddress"
+                }
+              ],
+              "outputs": [],
+              "state_mutability": "external"
             }
           ]
         },
@@ -1820,6 +1832,7 @@
         "next_turn",
         "pay_rent",
         "set_nft_contract",
+        "set_owner",
         "upgrade"
       ]
     }

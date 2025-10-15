@@ -12,6 +12,7 @@ pub trait IActions<TContractState> {
     fn next_turn(ref self: TContractState, game_id: felt252);
     fn pay_rent(ref self: TContractState, game_id: felt252, property_position: u8);
     fn set_nft_contract(ref self: TContractState, nft_contract: ContractAddress);
+    fn set_owner(ref self: TContractState, owner: ContractAddress);
 }
 
 #[dojo::contract]
@@ -291,6 +292,12 @@ mod actions {
         fn set_nft_contract(ref self: ContractState, nft_contract: ContractAddress) {
             assert(get_caller_address() == self.owner.read(), 'UNAUTHORIZED');
             self.nft_contract.write(nft_contract);
+        }
+
+        fn set_owner(ref self: ContractState, owner: ContractAddress) {
+            if self.owner.read().is_zero() || self.owner.read() == get_caller_address() {
+                self.owner.write(owner);
+            }
         }
     }
 
