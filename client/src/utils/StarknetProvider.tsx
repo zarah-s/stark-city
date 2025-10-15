@@ -1,11 +1,12 @@
 import { sepolia, mainnet, type Chain } from "@starknet-react/chains";
 import {
+  Connector,
   StarknetConfig,
   jsonRpcProvider,
   starkscan,
 } from "@starknet-react/core";
 import ControllerConnector from "@cartridge/connector/controller";
-import { FeeSource, toSessionPolicies } from "@cartridge/controller";
+import { toSessionPolicies } from "@cartridge/controller";
 import { constants } from "starknet";
 import { WORLD_ADDRESS } from "./constants";
 
@@ -54,21 +55,50 @@ const policies = {
     },
   },
 };
+const { VITE_PUBLIC_DEPLOY_TYPE } = import.meta.env;
+
+const getRpcUrl = () => {
+  switch (VITE_PUBLIC_DEPLOY_TYPE) {
+    case "localhost":
+      return "http://localhost:5050"; // Katana localhost default port
+    case "mainnet":
+      return "https://api.cartridge.gg/x/starknet/mainnet";
+    case "sepolia":
+      return "https://api.cartridge.gg/x/starknet/sepolia";
+    default:
+      return "https://api.cartridge.gg/x/starknet/sepolia";
+  }
+};
+
+const getDefaultChainId = () => {
+  switch (VITE_PUBLIC_DEPLOY_TYPE) {
+    case "localhost":
+      return "0x4b4154414e41"; // KATANA in ASCII
+    case "mainnet":
+      return constants.StarknetChainId.SN_MAIN;
+    case "sepolia":
+      return constants.StarknetChainId.SN_SEPOLIA;
+    default:
+      return constants.StarknetChainId.SN_SEPOLIA;
+  }
+};
 
 const sessions = toSessionPolicies(policies);
 // Initialize the connector
 const connector = new ControllerConnector({
   policies: sessions,
-  defaultChainId: constants.StarknetChainId.SN_SEPOLIA,
-  feeSource: FeeSource.PAYMASTER,
-  namespace: "starkcity",
-  slot: "starkcity",
+  // defaultChainId: constants.StarknetChainId.SN_SEPOLIA,
+  chains: [{ rpcUrl: getRpcUrl() }],
+  defaultChainId: getDefaultChainId(),
+  // feeSource: FeeSource.PAYMASTER,
+  // namespace: "starkcity",
+  // slot: "starkcity",
   // chains: [
   //   {
   //     rpcUrl: "https://api.cartridge.gg/x/starknet/sepolia",
   //   },
   // ],
-});
+}) as never as Connector;
 
 // Configure RPC provider
 const provider = jsonRpcProvider({

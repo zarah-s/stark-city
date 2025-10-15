@@ -43,6 +43,7 @@ export default function App() {
   const [gameMode, setGameMode] = useState<"menu" | "computer" | "online">(
     "menu"
   );
+  const [creatingRoom, setCreatingRoom] = useState(false);
   const [roomCreated, setRoomCreated] = useState(false);
   const [roomJoined, setRoomJoined] = useState(false);
   const [shouldJoin, setShouldJoin] = useState<null | string>(null);
@@ -505,6 +506,7 @@ export default function App() {
   const createRoom = async () => {
     try {
       if (!playerName.trim()) return;
+      setCreatingRoom(true);
       const code = Math.random().toString(36).substring(2, 8).toUpperCase();
       const tx = await call("createGame", code);
       if (tx) {
@@ -512,8 +514,10 @@ export default function App() {
         setRoomCreated(true);
       }
       connectSocket(code, playerName, true);
+      setCreatingRoom(false);
     } catch (error: any) {
       toast.error(error.message || "OOPPSS");
+      setCreatingRoom(false);
     }
   };
 
@@ -949,16 +953,16 @@ export default function App() {
               <div className="grid grid-cols-2 gap-4">
                 <button
                   onClick={createRoom}
-                  disabled={!playerName}
+                  disabled={!playerName || creatingRoom}
                   className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:from-gray-600 disabled:to-gray-700 text-white font-black py-4 rounded-lg border-4 border-purple-800 hover:border-pink-400 disabled:border-gray-800"
                   style={{ fontFamily: "'Bangers', cursive" }}
                 >
-                  CREATE ROOM
+                  {creatingRoom ? "Creating..." : " CREATE ROOM"}
                 </button>
 
                 <button
                   onClick={() => setShowJoinInput(!showJoinInput)}
-                  disabled={!playerName}
+                  disabled={!playerName || creatingRoom}
                   className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 disabled:from-gray-600 disabled:to-gray-700 text-white font-black py-4 rounded-lg border-4 border-blue-800 hover:border-cyan-400 disabled:border-gray-800"
                   style={{ fontFamily: "'Bangers', cursive" }}
                 >

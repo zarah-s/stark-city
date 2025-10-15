@@ -443,4 +443,4 @@ export const PLAYER_COLORS = [
 ];
 
 export const SOCKET_SERVER_URL = "http://localhost:9000";
-export const WORLD_ADDRESS = manifest.world.address;
+export const WORLD_ADDRESS = manifest.contracts[0].address;
