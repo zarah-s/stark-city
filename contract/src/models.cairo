@@ -4,7 +4,7 @@ use starknet::ContractAddress;
 #[dojo::model]
 pub struct Game {
     #[key]
-    pub game_id: u32,
+    pub game_id: felt252,
     pub host: ContractAddress,
     pub started: bool,
     pub current_player: u8,
@@ -16,7 +16,7 @@ pub struct Game {
 #[dojo::model]
 pub struct Player {
     #[key]
-    pub game_id: u32,
+    pub game_id: felt252,
     #[key]
     pub player_address: ContractAddress,
     pub player_id: u8,
@@ -30,7 +30,7 @@ pub struct Player {
 #[dojo::model]
 pub struct Property {
     #[key]
-    pub game_id: u32,
+    pub game_id: felt252,
     #[key]
     pub position: u8,
     pub owner: ContractAddress,
@@ -45,7 +45,7 @@ pub struct Property {
 #[dojo::model]
 pub struct GameMove {
     #[key]
-    pub game_id: u32,
+    pub game_id: felt252,
     #[key]
     pub move_id: u32,
     pub player: ContractAddress,

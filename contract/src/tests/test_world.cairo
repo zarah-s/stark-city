@@ -101,7 +101,7 @@ mod tests {
         // Set caller as player 1
         set_contract_address(PLAYER1());
 
-        let game_id = 12345_u32;
+        let game_id = 12345;
 
         // Create game
         actions.create_game(game_id);
@@ -122,7 +122,7 @@ mod tests {
 
         // Player 1 creates game
         set_contract_address(PLAYER1());
-        let game_id = 12345_u32;
+        let game_id = 12345;
         actions.create_game(game_id);
 
         // Player 1 joins
@@ -162,7 +162,7 @@ mod tests {
         let (_world, actions, _) = setup_world();
 
         set_contract_address(PLAYER1());
-        let game_id = 12345_u32;
+        let game_id = 12345;
         actions.create_game(game_id);
         actions.join_game(game_id, 0);
 
@@ -185,7 +185,7 @@ mod tests {
         let (_world, actions, _) = setup_world();
 
         set_contract_address(PLAYER1());
-        let game_id = 12345_u32;
+        let game_id = 12345;
         actions.create_game(game_id);
 
         // Add 4 players
@@ -214,7 +214,7 @@ mod tests {
         let (_world, actions, _) = setup_world();
 
         set_contract_address(PLAYER1());
-        let game_id = 12345_u32;
+        let game_id = 12345;
         actions.create_game(game_id);
         actions.join_game(game_id, 0);
 
@@ -231,7 +231,7 @@ mod tests {
         let (_world, actions, _) = setup_world();
 
         set_contract_address(PLAYER1());
-        let game_id = 12345_u32;
+        let game_id = 12345;
         actions.create_game(game_id);
         actions.join_game(game_id, 0);
 
@@ -245,7 +245,7 @@ mod tests {
         let (mut world, actions, _) = setup_world();
 
         set_contract_address(PLAYER1());
-        let game_id = 12345_u32;
+        let game_id = 12345;
         actions.create_game(game_id);
         actions.join_game(game_id, 0);
 
@@ -277,7 +277,7 @@ mod tests {
 
         // Setup game
         set_contract_address(PLAYER1());
-        let game_id = 12345_u32;
+        let game_id = 12345;
         actions.create_game(game_id);
         actions.join_game(game_id, 0);
 
@@ -317,7 +317,7 @@ mod tests {
 
         // Setup game
         set_contract_address(PLAYER1());
-        let game_id = 12345_u32;
+        let game_id = 12345;
         actions.create_game(game_id);
         actions.join_game(game_id, 0);
 
@@ -359,7 +359,7 @@ mod tests {
         let (mut world, actions, nft) = setup_world();
 
         set_contract_address(PLAYER1());
-        let game_id = 12345_u32;
+        let game_id = 12345;
         actions.create_game(game_id);
         actions.join_game(game_id, 0);
 
@@ -409,7 +409,7 @@ mod tests {
         let (mut world, actions, nft) = setup_world();
 
         set_contract_address(PLAYER1());
-        let game_id = 12345_u32;
+        let game_id = 12345;
         actions.create_game(game_id);
         actions.join_game(game_id, 0);
 
@@ -449,7 +449,7 @@ mod tests {
         let (mut world, actions, nft) = setup_world();
 
         set_contract_address(PLAYER1());
-        let game_id = 12345_u32;
+        let game_id = 12345;
         actions.create_game(game_id);
         actions.join_game(game_id, 0);
 
@@ -502,7 +502,7 @@ mod tests {
         let (world, actions, _nft) = setup_world();
 
         set_contract_address(PLAYER1());
-        let game_id = 12345_u32;
+        let game_id = 12345;
         actions.create_game(game_id);
         actions.join_game(game_id, 0);
 
@@ -523,7 +523,7 @@ mod tests {
         let (world, actions, _nft) = setup_world();
 
         set_contract_address(PLAYER1());
-        let game_id = 12345_u32;
+        let game_id = 12345;
         actions.create_game(game_id);
         actions.join_game(game_id, 0);
 
@@ -553,7 +553,7 @@ mod tests {
         let (world, actions, _nft) = setup_world();
 
         set_contract_address(PLAYER1());
-        let game_id = 12345_u32;
+        let game_id = 12345;
         actions.create_game(game_id);
         actions.join_game(game_id, 0);
 
@@ -584,7 +584,7 @@ mod tests {
         // world.sync_perms_and_inits(contract_defs());
         // Setup game
         set_contract_address(PLAYER1());
-        let game_id = 12345_u32;
+        let game_id = 12345;
         actions.create_game(game_id);
         actions.join_game(game_id, 0);
 
@@ -614,7 +614,7 @@ mod tests {
         let (_world, actions, _) = setup_world();
 
         set_contract_address(PLAYER1());
-        let game_id = 12345_u32;
+        let game_id = 12345;
         actions.create_game(game_id);
         actions.join_game(game_id, 0);
 
@@ -635,7 +635,7 @@ mod tests {
         let (_world, actions, _) = setup_world();
 
         set_contract_address(PLAYER1());
-        let game_id = 12345_u32;
+        let game_id = 12345;
         actions.create_game(game_id);
         actions.join_game(game_id, 0);
 
@@ -655,7 +655,7 @@ mod tests {
         let (mut world, actions, _) = setup_world();
 
         set_contract_address(PLAYER1());
-        let game_id = 12345_u32;
+        let game_id = 12345;
         actions.create_game(game_id);
         actions.join_game(game_id, 0);
 
@@ -681,7 +681,7 @@ mod tests {
         let (mut world, actions, _) = setup_world();
 
         set_contract_address(PLAYER1());
-        let game_id = 12345_u32;
+        let game_id = 12345;
         actions.create_game(game_id);
         actions.join_game(game_id, 0);
 

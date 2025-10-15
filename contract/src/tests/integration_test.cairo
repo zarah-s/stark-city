@@ -80,7 +80,7 @@ mod integration_tests {
 
         // Create game
         set_contract_address(PLAYER1());
-        let game_id = 99999_u32;
+        let game_id = 99999;
         actions.create_game(game_id);
 
         // Join players

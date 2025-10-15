@@ -2,15 +2,15 @@ use starknet::ContractAddress;
 
 #[starknet::interface]
 pub trait IActions<TContractState> {
-    fn create_game(ref self: TContractState, game_id: u32);
-    fn join_game(ref self: TContractState, game_id: u32, piece: u8);
-    fn start_game(ref self: TContractState, game_id: u32);
-    fn roll_dice(ref self: TContractState, game_id: u32, dice1: u8, dice2: u8);
-    fn buy_property(ref self: TContractState, game_id: u32, position: u8);
-    fn buy_house(ref self: TContractState, game_id: u32, position: u8);
-    fn sell_house(ref self: TContractState, game_id: u32, position: u8);
-    fn next_turn(ref self: TContractState, game_id: u32);
-    fn pay_rent(ref self: TContractState, game_id: u32, property_position: u8);
+    fn create_game(ref self: TContractState, game_id: felt252);
+    fn join_game(ref self: TContractState, game_id: felt252, piece: u8);
+    fn start_game(ref self: TContractState, game_id: felt252);
+    fn roll_dice(ref self: TContractState, game_id: felt252, dice1: u8, dice2: u8);
+    fn buy_property(ref self: TContractState, game_id: felt252, position: u8);
+    fn buy_house(ref self: TContractState, game_id: felt252, position: u8);
+    fn sell_house(ref self: TContractState, game_id: felt252, position: u8);
+    fn next_turn(ref self: TContractState, game_id: felt252);
+    fn pay_rent(ref self: TContractState, game_id: felt252, property_position: u8);
     fn set_nft_contract(ref self: TContractState, nft_contract: ContractAddress);
 }
 
@@ -33,7 +33,7 @@ mod actions {
 
     #[abi(embed_v0)]
     impl ActionsImpl of IActions<ContractState> {
-        fn create_game(ref self: ContractState, game_id: u32) {
+        fn create_game(ref self: ContractState, game_id: felt252) {
             let mut world = self.world_default();
             let caller = get_caller_address();
 
@@ -53,7 +53,7 @@ mod actions {
             world.emit_event(@GameCreated { game_id, host: caller });
         }
 
-        fn join_game(ref self: ContractState, game_id: u32, piece: u8) {
+        fn join_game(ref self: ContractState, game_id: felt252, piece: u8) {
             let mut world = self.world_default();
             let caller = get_caller_address();
             let mut game: Game = world.read_model(game_id);
@@ -81,7 +81,7 @@ mod actions {
                 );
         }
 
-        fn start_game(ref self: ContractState, game_id: u32) {
+        fn start_game(ref self: ContractState, game_id: felt252) {
             let mut world = self.world_default();
             let caller = get_caller_address();
             let mut game: Game = world.read_model(game_id);
@@ -97,7 +97,7 @@ mod actions {
             world.emit_event(@GameStarted { game_id, started: true });
         }
 
-        fn roll_dice(ref self: ContractState, game_id: u32, dice1: u8, dice2: u8) {
+        fn roll_dice(ref self: ContractState, game_id: felt252, dice1: u8, dice2: u8) {
             let mut world = self.world_default();
             let caller = get_caller_address();
             let game: Game = world.read_model(game_id);
@@ -135,7 +135,7 @@ mod actions {
             world.emit_event(@DiceRolled { game_id, player: caller, dice1, dice2 });
         }
 
-        fn buy_property(ref self: ContractState, game_id: u32, position: u8) {
+        fn buy_property(ref self: ContractState, game_id: felt252, position: u8) {
             let caller = get_caller_address();
             let mut world = self.world_default();
 
@@ -162,7 +162,7 @@ mod actions {
                 );
         }
 
-        fn buy_house(ref self: ContractState, game_id: u32, position: u8) {
+        fn buy_house(ref self: ContractState, game_id: felt252, position: u8) {
             let caller = get_caller_address();
             let mut world = self.world_default();
 
@@ -203,7 +203,7 @@ mod actions {
                 );
         }
 
-        fn sell_house(ref self: ContractState, game_id: u32, position: u8) {
+        fn sell_house(ref self: ContractState, game_id: felt252, position: u8) {
             let caller = get_caller_address();
             let mut world = self.world_default();
 
@@ -246,7 +246,7 @@ mod actions {
                 );
         }
 
-        fn next_turn(ref self: ContractState, game_id: u32) {
+        fn next_turn(ref self: ContractState, game_id: felt252) {
             let mut world = self.world_default();
             let mut game: Game = world.read_model(game_id);
 
@@ -256,7 +256,7 @@ mod actions {
             world.emit_event(@TurnChanged { game_id, current_player: game.current_player });
         }
 
-        fn pay_rent(ref self: ContractState, game_id: u32, property_position: u8) {
+        fn pay_rent(ref self: ContractState, game_id: felt252, property_position: u8) {
             let mut world = self.world_default();
             let caller = get_caller_address();
             let mut player: Player = world.read_model((game_id, caller));
@@ -297,7 +297,7 @@ mod actions {
     #[dojo::event]
     pub struct GameCreated {
         #[key]
-        pub game_id: u32,
+        pub game_id: felt252,
         pub host: ContractAddress,
     }
 
@@ -305,7 +305,7 @@ mod actions {
     #[dojo::event]
     pub struct PlayerJoined {
         #[key]
-        pub game_id: u32,
+        pub game_id: felt252,
         pub player: ContractAddress,
         pub player_id: u8,
     }
@@ -314,7 +314,7 @@ mod actions {
     #[dojo::event]
     pub struct GameStarted {
         #[key]
-        pub game_id: u32,
+        pub game_id: felt252,
         pub started: bool,
     }
 
@@ -322,7 +322,7 @@ mod actions {
     #[dojo::event]
     pub struct DiceRolled {
         #[key]
-        pub game_id: u32,
+        pub game_id: felt252,
         pub player: ContractAddress,
         pub dice1: u8,
         pub dice2: u8,
@@ -332,7 +332,7 @@ mod actions {
     #[dojo::event]
     pub struct PropertyPurchased {
         #[key]
-        pub game_id: u32,
+        pub game_id: felt252,
         pub player: ContractAddress,
         pub position: u8,
         pub price: u32,
@@ -342,7 +342,7 @@ mod actions {
     #[dojo::event]
     pub struct HouseBought {
         #[key]
-        pub game_id: u32,
+        pub game_id: felt252,
         pub player: ContractAddress,
         pub position: u8,
         pub houses: u8,
@@ -352,7 +352,7 @@ mod actions {
     #[dojo::event]
     pub struct HouseSold {
         #[key]
-        pub game_id: u32,
+        pub game_id: felt252,
         pub player: ContractAddress,
         pub position: u8,
         pub houses: u8,
@@ -363,7 +363,7 @@ mod actions {
     #[dojo::event]
     pub struct TurnChanged {
         #[key]
-        pub game_id: u32,
+        pub game_id: felt252,
         pub current_player: u8,
     }
 
@@ -371,7 +371,7 @@ mod actions {
     #[dojo::event]
     pub struct RentPaid {
         #[key]
-        pub game_id: u32,
+        pub game_id: felt252,
         pub from: ContractAddress,
         pub to: ContractAddress,
         pub amount: u32,
@@ -384,7 +384,7 @@ mod actions {
             self.world(@"starkcity")
         }
 
-        fn initialize_properties(self: @ContractState, game_id: u32) {
+        fn initialize_properties(self: @ContractState, game_id: felt252) {
             let mut world = self.world_default();
             let zero_addr = Zero::zero();
 
@@ -422,7 +422,7 @@ mod actions {
         }
 
         fn owns_monopoly(
-            self: @ContractState, game_id: u32, player: ContractAddress, color_group: u8,
+            self: @ContractState, game_id: felt252, player: ContractAddress, color_group: u8,
         ) -> bool {
             let mut world = self.world_default();
 
@@ -444,7 +444,7 @@ mod actions {
             owned == required
         }
 
-        fn get_move_count(self: @ContractState, game_id: u32) -> u32 {
+        fn get_move_count(self: @ContractState, game_id: felt252) -> u32 {
             let mut count: u32 = 0;
             let mut i: u32 = 0;
             let mut world = self.world_default();
