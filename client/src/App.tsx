@@ -71,8 +71,8 @@ export default function App() {
   const [isRolling, setIsRolling] = useState(false);
   const [canRoll, setCanRoll] = useState(false);
   const [showManageProperties, setShowManageProperties] = useState(false);
-  const [turnTimer, setTurnTimer] = useState(20);
-  const timerRef = useRef<any>(null);
+  // const [turnTimer, setTurnTimer] = useState(20);
+  // const timerRef = useRef<any>(null);
   const { call } = useInteraction();
 
   /// CONNECT WALLET AND ENTER GAME
@@ -131,61 +131,61 @@ export default function App() {
   };
 
   // Start turn timer for online mode
-  const startTurnTimer = () => {
-    if (gameMode !== "online") return;
+  // const startTurnTimer = () => {
+  //   if (gameMode !== "online") return;
 
-    setTurnTimer(20);
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-    }
+  //   setTurnTimer(20);
+  //   if (timerRef.current) {
+  //     clearInterval(timerRef.current);
+  //   }
 
-    timerRef.current = setInterval(() => {
-      setTurnTimer((prev) => {
-        if (prev <= 1) {
-          if (timerRef.current) {
-            clearInterval(timerRef.current);
-          }
-          // Auto skip turn
-          if (socketRef.current && currentPlayer === myPlayerId && canRoll) {
-            socketRef.current.emit("skipTurn", {
-              roomCode,
-              playerId: myPlayerId,
-            });
-          }
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  };
+  //   timerRef.current = setInterval(() => {
+  //     setTurnTimer((prev) => {
+  //       if (prev <= 1) {
+  //         if (timerRef.current) {
+  //           clearInterval(timerRef.current);
+  //         }
+  //         // Auto skip turn
+  //         if (socketRef.current && currentPlayer === myPlayerId && canRoll) {
+  //           socketRef.current.emit("skipTurn", {
+  //             roomCode,
+  //             playerId: myPlayerId,
+  //           });
+  //         }
+  //         return 0;
+  //       }
+  //       return prev - 1;
+  //     });
+  //   }, 1000);
+  // };
 
   // Stop turn timer
-  const stopTurnTimer = () => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-    setTurnTimer(20);
-  };
+  // const stopTurnTimer = () => {
+  //   if (timerRef.current) {
+  //     clearInterval(timerRef.current);
+  //     timerRef.current = null;
+  //   }
+  //   setTurnTimer(20);
+  // };
 
   // Effect to handle turn timer in online mode
-  useEffect(() => {
-    if (
-      gameMode === "online" &&
-      gameStarted &&
-      currentPlayer === myPlayerId &&
-      canRoll &&
-      !showBuyModal
-    ) {
-      startTurnTimer();
-    } else {
-      stopTurnTimer();
-    }
+  // useEffect(() => {
+  //   if (
+  //     gameMode === "online" &&
+  //     gameStarted &&
+  //     currentPlayer === myPlayerId &&
+  //     canRoll &&
+  //     !showBuyModal
+  //   ) {
+  //     startTurnTimer();
+  //   } else {
+  //     stopTurnTimer();
+  //   }
 
-    return () => {
-      stopTurnTimer();
-    };
-  }, [gameMode, gameStarted, currentPlayer, myPlayerId, canRoll, showBuyModal]);
+  //   return () => {
+  //     stopTurnTimer();
+  //   };
+  // }, [gameMode, gameStarted, currentPlayer, myPlayerId, canRoll, showBuyModal]);
 
   // Check if player owns all properties of a color group
   const ownsMonopoly = (playerId: number, color: string): boolean => {
@@ -1244,22 +1244,6 @@ export default function App() {
                     >
                       STARKCITY
                     </div>
-
-                    {gameMode === "online" &&
-                      currentPlayer === myPlayerId &&
-                      canRoll &&
-                      !showBuyModal && (
-                        <div
-                          className={`text-3xl sm:text-5xl font-black mb-2 ${
-                            turnTimer <= 3
-                              ? "text-red-400 animate-pulse"
-                              : "text-yellow-300"
-                          }`}
-                          style={{ fontFamily: "'Press Start 2P', cursive" }}
-                        >
-                          {turnTimer}s
-                        </div>
-                      )}
 
                     <div className="flex gap-2 sm:gap-4 mb-2 sm:mb-4">
                       {dice.map((d, i) => (
