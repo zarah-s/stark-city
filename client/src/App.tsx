@@ -44,6 +44,9 @@ export default function App() {
   const [gameMode, setGameMode] = useState<"menu" | "computer" | "online">(
     "menu"
   );
+  const [roomCreated, setRoomCreated] = useState(false);
+  const [roomJoined, setRoomJoined] = useState(false);
+  const [shouldJoin, setShouldJoin] = useState<null | string>(null);
   const [gameStarted, setGameStarted] = useState(false);
 
   const [playerName, setPlayerName] = useState("");
@@ -84,6 +87,19 @@ export default function App() {
       console.error(error);
     }
   }
+
+  useEffect(() => {
+    (async function () {
+      if (!roomCreated) return;
+      if (roomJoined) return;
+      if (isHost) {
+        if (!shouldJoin) return;
+        console.log("JOINING");
+        await call("joinGame", shouldJoin, 0);
+        setRoomJoined(true);
+      }
+    })();
+  }, [roomCreated]);
 
   useEffect(() => {
     (async function () {
@@ -291,13 +307,16 @@ export default function App() {
         );
         if (pieceIndex === -1) return;
 
-        await call("joinGame", data.roomCode, pieceIndex);
         setConnectedPlayers(data.players);
         setMyPlayerId(data.playerId);
         setRoomCode(data.roomCode);
         setIsHost(data.isHost);
         addLog(`You joined`);
         setMessage(`Room: ${data.roomCode}`);
+        if (!isHost) {
+          console.log("NOT HOS JOIN");
+          await call("joinGame", data.roomCode, pieceIndex);
+        }
       } catch (error: any) {
         toast.error(error.message || "OOPPSS");
       }
@@ -400,6 +419,7 @@ export default function App() {
 
     socket.on("turnChanged", async (data: any) => {
       try {
+        console.log({ turnChanged: data, myPlayerId });
         setCurrentPlayer(data.currentPlayer);
         setCanRoll(data.currentPlayer === myPlayerId);
         setMessage(`${data.playerName}'s turn`);
@@ -414,6 +434,7 @@ export default function App() {
 
     socket.on("payRent", async (data: any) => {
       try {
+        console.log({ rent: data });
         if (data.playerId === myPlayerId) {
           await call("payRent", data.roomCode, data.position);
         }
@@ -486,7 +507,11 @@ export default function App() {
     try {
       if (!playerName.trim()) return;
       const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-      await call("createGame", code);
+      const tx = await call("createGame", code);
+      if (tx) {
+        setShouldJoin(code);
+        setRoomCreated(true);
+      }
       connectSocket(code, playerName, true);
     } catch (error: any) {
       toast.error(error.message || "OOPPSS");
@@ -496,7 +521,6 @@ export default function App() {
   const joinRoom = async (roomCode: string) => {
     try {
       if (!roomCode.trim() || !playerName.trim()) return;
-
       connectSocket(roomCode, playerName, false);
     } catch (error: any) {
       toast.error(error.message || "OOPPSS");
@@ -507,8 +531,8 @@ export default function App() {
     try {
       if (!isHost || connectedPlayers.length < 2) return;
       if (socketRef.current) {
-        await call("startGame", roomCode);
         socketRef.current.emit("startGame", { roomCode });
+        await call("startGame", roomCode);
       }
     } catch (error: any) {
       toast.error(error.message || "OOPPSS");

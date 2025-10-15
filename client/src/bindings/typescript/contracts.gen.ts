@@ -229,6 +229,32 @@ export function setupWorld(provider: DojoProvider) {
     }
   };
 
+  const build_actions_setNftContract_calldata = (
+    nftContract: string
+  ): DojoCall => {
+    return {
+      contractName: "actions",
+      entrypoint: "set_nft_contract",
+      calldata: [nftContract],
+    };
+  };
+
+  const actions_setNftContract = async (
+    snAccount: Account | AccountInterface,
+    nftContract: string
+  ) => {
+    try {
+      return await provider.execute(
+        snAccount as any,
+        build_actions_setNftContract_calldata(nftContract),
+        "starkcity"
+      );
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  };
+
   const build_actions_startGame_calldata = (gameId: BigNumberish): DojoCall => {
     return {
       contractName: "actions",
@@ -271,6 +297,8 @@ export function setupWorld(provider: DojoProvider) {
       buildRollDiceCalldata: build_actions_rollDice_calldata,
       sellHouse: actions_sellHouse,
       buildSellHouseCalldata: build_actions_sellHouse_calldata,
+      setNftContract: actions_setNftContract,
+      buildSetNftContractCalldata: build_actions_setNftContract_calldata,
       startGame: actions_startGame,
       buildStartGameCalldata: build_actions_startGame_calldata,
     },

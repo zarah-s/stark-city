@@ -1480,7 +1480,7 @@
   "contracts": [
     {
       "address": "0x128d5e9692d1c162ed7a7992403c413f18a3baf5e32a5905877273d0c1952e2",
-      "class_hash": "0x12407a74cfdd4a1acf104a22be1eed220cbba44f1acf18d27e75cd17b7f8641",
+      "class_hash": "0x69e9b671042afbe012fc54da43ae94bd998087a64ac595ba5ef49dc308b49f2",
       "abi": [
         {
           "type": "impl",
@@ -1547,7 +1547,7 @@
               "inputs": [
                 {
                   "name": "game_id",
-                  "type": "core::integer::u32"
+                  "type": "core::felt252"
                 }
               ],
               "outputs": [],
@@ -1559,7 +1559,7 @@
               "inputs": [
                 {
                   "name": "game_id",
-                  "type": "core::integer::u32"
+                  "type": "core::felt252"
                 },
                 {
                   "name": "piece",
@@ -1575,7 +1575,7 @@
               "inputs": [
                 {
                   "name": "game_id",
-                  "type": "core::integer::u32"
+                  "type": "core::felt252"
                 }
               ],
               "outputs": [],
@@ -1587,7 +1587,7 @@
               "inputs": [
                 {
                   "name": "game_id",
-                  "type": "core::integer::u32"
+                  "type": "core::felt252"
                 },
                 {
                   "name": "dice1",
@@ -1607,7 +1607,7 @@
               "inputs": [
                 {
                   "name": "game_id",
-                  "type": "core::integer::u32"
+                  "type": "core::felt252"
                 },
                 {
                   "name": "position",
@@ -1623,7 +1623,7 @@
               "inputs": [
                 {
                   "name": "game_id",
-                  "type": "core::integer::u32"
+                  "type": "core::felt252"
                 },
                 {
                   "name": "position",
@@ -1639,7 +1639,7 @@
               "inputs": [
                 {
                   "name": "game_id",
-                  "type": "core::integer::u32"
+                  "type": "core::felt252"
                 },
                 {
                   "name": "position",
@@ -1655,7 +1655,7 @@
               "inputs": [
                 {
                   "name": "game_id",
-                  "type": "core::integer::u32"
+                  "type": "core::felt252"
                 }
               ],
               "outputs": [],
@@ -1667,11 +1667,23 @@
               "inputs": [
                 {
                   "name": "game_id",
-                  "type": "core::integer::u32"
+                  "type": "core::felt252"
                 },
                 {
                   "name": "property_position",
                   "type": "core::integer::u8"
+                }
+              ],
+              "outputs": [],
+              "state_mutability": "external"
+            },
+            {
+              "type": "function",
+              "name": "set_nft_contract",
+              "inputs": [
+                {
+                  "name": "nft_contract",
+                  "type": "core::starknet::contract_address::ContractAddress"
                 }
               ],
               "outputs": [],
@@ -1807,6 +1819,7 @@
         "sell_house",
         "next_turn",
         "pay_rent",
+        "set_nft_contract",
         "upgrade"
       ]
     }
@@ -1815,25 +1828,25 @@
   "models": [
     {
       "members": [],
-      "class_hash": "0x36e489734eebdb202a7893c86f57588c447177e16363296ca0adbbb2c242611",
+      "class_hash": "0x181a3fc76b337a47ab37a056359d602cda22139e3a8aa3cc01b3751b5657879",
       "tag": "starkcity-Game",
       "selector": "0x3b4ad12b49d75ccb6808cdcc3a249fef7a0603a83026b40ee45a5d3a9d8fe1"
     },
     {
       "members": [],
-      "class_hash": "0x3bc145cf944dc632b855b7e8d69ad4f0080017a2224599dcac6a82c0a1348c1",
+      "class_hash": "0x12926fe3f8cbf7bafe250be705f723f0a6bfd3cb2db7b17bf4780b7123896e4",
       "tag": "starkcity-GameMove",
       "selector": "0x58254e7117c55f07a6c5d450daea27d5cd781baf18167401fd3b52d9e27a862"
     },
     {
       "members": [],
-      "class_hash": "0x63dde56368dfec31f69c0658890a47b4c37c1a745720e8f23c03611aed7e214",
+      "class_hash": "0x51ad055999b8c3c92039466e05b15d0239d18d36d79e467f7cee5e6f17d3912",
       "tag": "starkcity-Player",
       "selector": "0x6f2a83a63d2c0b96f32ede1c32dab36f722c565035054dbb32b087fec4df2d5"
     },
     {
       "members": [],
-      "class_hash": "0x75b48d663e4bf7dda02549e9c38ffa48cfb432cab56f74680126a17c3112235",
+      "class_hash": "0x770c920adfdd66c8acbe93d5803ff1854cd51851c226b5deede1a1f927bdc1c",
       "tag": "starkcity-Property",
       "selector": "0x501aedb360c0efeaf3c8b54da5821a05a7e7aab86ab1220be650480a657e77f"
     }
@@ -1841,55 +1854,55 @@
   "events": [
     {
       "members": [],
-      "class_hash": "0x682996c2549d431a6be89d6e99ca425ac2659ca8ecc74d85bce6fae7b40811f",
+      "class_hash": "0x37a077aaf8298f5545bf009f250deabbd9037ef331afbe62feb80255f9ac692",
       "tag": "starkcity-DiceRolled",
       "selector": "0x3cb42009a68e07636d407491559a42ff9c574a15c4335feefb7064d6ded4deb"
     },
     {
       "members": [],
-      "class_hash": "0x21a9988f2047f15d4cdf495b8189e458e47559900b089716f25c2e408964a50",
+      "class_hash": "0x213ce6e37eea500d9bbf31add82f816479a83f67f652e46b4a6c0adb6a1fae9",
       "tag": "starkcity-GameCreated",
       "selector": "0x3b7b65cc2ea9533aeeb6792aaf5fff69bfa16ed2163a2412b414e0cc9330d49"
     },
     {
       "members": [],
-      "class_hash": "0x6d058a1fe3f60a8f11a35e3bbc59a8a09b94e6fffcc2089cc7d0feb36988090",
+      "class_hash": "0x5a9e46101a8e4230722ca255814d8816ce503f60a4e0a8de92e37fca4a30905",
       "tag": "starkcity-GameStarted",
       "selector": "0x4a699fca951bc91e419c8590be6a641605e3f6cd18c15e35b385d9cf901f758"
     },
     {
       "members": [],
-      "class_hash": "0x2e4b97067030a5b5bd5da8a9aad5846b5ec8adecf3929a1bf5dde9f18c00853",
+      "class_hash": "0x1b323a1db3be98d3f23f9b121dfea77585dc8fd94080904a42145550899cc5b",
       "tag": "starkcity-HouseBought",
       "selector": "0x7110b026950aadc278e52e9a90da78cc1020db26a30b63f9e289709626bb3b4"
     },
     {
       "members": [],
-      "class_hash": "0x24f29889664d5439958726f80040253dd9b4f0b8ca13eb53db6dfc2ad258523",
+      "class_hash": "0x4bc17c5ceaea9ce8ce7fc541d6e129bb1dbaf46eea1ae97e5716c746a6d1ba8",
       "tag": "starkcity-HouseSold",
       "selector": "0x4fc6e692f3fe7f899c3556d548ab1680d5c68d0130045621188f24679e9a974"
     },
     {
       "members": [],
-      "class_hash": "0x3f5a54927c3aae2e8130f08d615405149bb0d64ed866faa8088ab03699508e8",
+      "class_hash": "0x6f7452f1668c22be8b09e4b61709fe1b4190d426b0c95f6dda7a5bbec6292e1",
       "tag": "starkcity-PlayerJoined",
       "selector": "0x1ce4b0a253e7d9e7d805a7b6bd3fd15eb603519fe865ae6d977eebefe99fb3f"
     },
     {
       "members": [],
-      "class_hash": "0x14c9850505e0bc1e2921f8cfb40a5cff880ebadaa8f17eb76da42b8c35b188b",
+      "class_hash": "0x497b34c14776c406a259e072f369755cbf906802d016b9ab5c9a8fc35411eab",
       "tag": "starkcity-PropertyPurchased",
       "selector": "0x4c5a7c1bdbd399b004ef829de9192509211a938c5e2a9e995331fd3f3692446"
     },
     {
       "members": [],
-      "class_hash": "0x284f7c9b71f6288d1a77745436f05b68e649d586e695fa08d36158f3382e49c",
+      "class_hash": "0x1160b7498d325ba69d50e779813317e2698bf8bfd3a0b01b79bae0875a111c1",
       "tag": "starkcity-RentPaid",
       "selector": "0x4dd32f765f306181f76b38a5c48032d9e874d7e8cdf6ee7f6aa24d54b310e8e"
     },
     {
       "members": [],
-      "class_hash": "0x701893dba0644c9b66918c6e36b25d5efb40583b4ac2b7c8997a66d0d6b814b",
+      "class_hash": "0x5815ccc8930f85f176f42e6cf578b192d17b7eb41f3967680fdd6c15c4bc272",
       "tag": "starkcity-TurnChanged",
       "selector": "0x6a642b677aa5198fda19701e61d415f318974442a9a52d5b019f55181d83ae6"
     }

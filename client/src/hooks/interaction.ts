@@ -10,8 +10,10 @@ const useInteraction = () => {
       const tx = await client.actions[method](account, ...args);
       const receipt = await account.waitForTransaction(tx.transaction_hash);
       console.log(receipt);
+      return true;
     } catch (error: any) {
       toast.error(error.message || "OOPPSSS something went wrong");
+      return false;
     }
   }
 
