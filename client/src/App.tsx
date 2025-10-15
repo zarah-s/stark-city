@@ -813,10 +813,10 @@ export default function App() {
           </h1>
 
           <p
-            className="text-2xl font-bold text-purple-300 mb-8 animate-bounce"
+            className="text-2xl uppercase font-bold text-purple-300 mb-8 animate-bounce"
             style={{ fontFamily: "'Bangers', cursive" }}
           >
-            Build Your Empire!
+            Own the blockchain streets.
           </p>
 
           <div className="flex gap-2 justify-center">
