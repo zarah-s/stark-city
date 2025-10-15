@@ -1,0 +1,8 @@
+world_address = "0x01af1b8ded3868a4cc6a6314abc36190a14f5f6db41343595b08ffe71c7ac"
+
+rpc = "https://api.cartridge.gg/x/starknet/sepolia"
+
+[server]
+http_addr = "127.0.0.1"
+http_port = 8080
+http_cors_origins = ["*"]
