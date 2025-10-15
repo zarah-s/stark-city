@@ -423,9 +423,7 @@ export default function App() {
         setCurrentPlayer(data.currentPlayer);
         setCanRoll(data.currentPlayer === myPlayerId);
         setMessage(`${data.playerName}'s turn`);
-        if (data.currentPlayer === myPlayerId) {
-          await call("nextTurn", data.roomCode);
-        }
+        await call("nextTurn", data.roomCode);
         // stopTurnTimer();
       } catch (error: any) {
         toast.error(error.message || "OOPPSS");
