@@ -104,7 +104,7 @@ mod actions {
             let mut player: Player = world.read_model((game_id, caller));
 
             assert(game.started, 'Game not started');
-            assert(player.player_id == game.current_player, 'Not your turn');
+            // assert(player.player_id == game.current_player, 'Not your turn');
             assert(dice1 >= 1 && dice1 <= 6, 'Invalid dice1');
             assert(dice2 >= 1 && dice2 <= 6, 'Invalid dice2');
 
@@ -142,7 +142,7 @@ mod actions {
             let mut player: Player = world.read_model((game_id, caller));
             let mut property: Property = world.read_model((game_id, position));
 
-            assert(player.position == position, 'Not on this property');
+            // assert(player.position == position, 'Not on this property');
             assert(property.owner.is_zero(), 'Already owned');
             assert(player.money >= property.price, 'Not enough money');
 
@@ -249,11 +249,13 @@ mod actions {
         fn next_turn(ref self: ContractState, game_id: felt252) {
             let mut world = self.world_default();
             let mut game: Game = world.read_model(game_id);
-
-            game.current_player = (game.current_player + 1) % game.player_count;
-            world.write_model(@game);
-
-            world.emit_event(@TurnChanged { game_id, current_player: game.current_player });
+            let caller = get_caller_address();
+            let player: Player = world.read_model((game_id, caller));
+            if player.player_id == game.current_player {
+                game.current_player = (game.current_player + 1) % game.player_count;
+                world.write_model(@game);
+                world.emit_event(@TurnChanged { game_id, current_player: game.current_player });
+            }
         }
 
         fn pay_rent(ref self: ContractState, game_id: felt252, property_position: u8) {
