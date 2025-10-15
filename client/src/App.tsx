@@ -976,8 +976,8 @@ export default function App() {
                     type="text"
                     value={roomCode}
                     onChange={(e) => {
-                      setRoomCode(e.target.value.toUpperCase());
                       if (e.target.value.trim().length == 6) {
+                        setRoomCode(e.target.value.toUpperCase());
                         joinRoom(e.target.value.trim().toUpperCase());
                       }
                     }}
