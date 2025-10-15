@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   DollarSign,
   List,
@@ -22,7 +22,7 @@ import type { Player, Property } from "./utils/interfaces";
 import { PropertySpace } from "./components/PropertySpace";
 import { DiceIcon } from "./components/DiceIcon";
 import type { AccountInterface } from "starknet";
-import { useAccount, useConnect, useDisconnect } from "@starknet-react/core";
+import { useAccount, useConnect } from "@starknet-react/core";
 import useInteraction from "./hooks/interaction";
 import { toast } from "react-toastify";
 
@@ -39,7 +39,6 @@ declare global {
 export default function App() {
   const { account } = useAccount();
   const { connectAsync, connectors } = useConnect();
-  const { disconnectAsync } = useDisconnect();
   const [showSplash, setShowSplash] = useState(true);
   const [gameMode, setGameMode] = useState<"menu" | "computer" | "online">(
     "menu"
@@ -58,7 +57,7 @@ export default function App() {
   const [myPlayerId, setMyPlayerId] = useState<number>(0);
   const [showJoinInput, setShowJoinInput] = useState(false);
 
-  const [selectedPiece, setSelectedPiece] = useState("");
+  // const [selectedPiece, setSelectedPiece] = useState("");
   const [gameProperties, setGameProperties] = useState<Property[]>(PROPERTIES);
   const [players, setPlayers] = useState<Player[]>([]);
   const [currentPlayer, setCurrentPlayer] = useState(0);
@@ -264,7 +263,7 @@ export default function App() {
         return;
       }
 
-      const player = players[currentPlayer];
+      // const player = players[currentPlayer];
       if (prop.owner !== currentPlayer) return;
       if (prop.houses === 0) return;
 

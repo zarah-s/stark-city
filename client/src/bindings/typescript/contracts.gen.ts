@@ -3,10 +3,10 @@ import {
   Account,
   AccountInterface,
   type BigNumberish,
-  CairoOption,
-  CairoCustomEnum,
+  //   CairoOption,
+  //   CairoCustomEnum,
 } from "starknet";
-import * as models from "./models.gen";
+// import * as models from "./models.gen";
 
 export function setupWorld(provider: DojoProvider) {
   const build_actions_buyHouse_calldata = (
