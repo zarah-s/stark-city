@@ -678,6 +678,11 @@ io.on("connection", (socket) => {
           });
         } else if (property.owner !== playerId) {
           const rent = property.rent[property.houses];
+          io.to(roomCode).emit("payRent", {
+            playerId,
+            position: newPosition,
+            roomCode,
+          });
           player.money -= rent;
           gameRoom.players[property.owner].money += rent;
           message = `${player.name} paid $${rent} rent to ${
@@ -707,6 +712,7 @@ io.on("connection", (socket) => {
           io.to(roomCode).emit("turnChanged", {
             currentPlayer: gameRoom.currentPlayer,
             playerName: gameRoom.players[gameRoom.currentPlayer].name,
+            roomCode,
           });
 
           broadcastGameState(roomCode);
@@ -766,6 +772,7 @@ io.on("connection", (socket) => {
       io.to(roomCode).emit("turnChanged", {
         currentPlayer: gameRoom.currentPlayer,
         playerName: gameRoom.players[gameRoom.currentPlayer].name,
+        roomCode,
       });
 
       broadcastGameState(roomCode);
@@ -804,6 +811,7 @@ io.on("connection", (socket) => {
       io.to(roomCode).emit("turnChanged", {
         currentPlayer: gameRoom.currentPlayer,
         playerName: gameRoom.players[gameRoom.currentPlayer].name,
+        roomCode,
       });
 
       broadcastGameState(roomCode);
@@ -840,6 +848,7 @@ io.on("connection", (socket) => {
     io.to(roomCode).emit("turnChanged", {
       currentPlayer: gameRoom.currentPlayer,
       playerName: gameRoom.players[gameRoom.currentPlayer].name,
+      roomCode,
     });
 
     broadcastGameState(roomCode);
