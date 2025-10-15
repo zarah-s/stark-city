@@ -1,14 +1,17 @@
+use starknet::ContractAddress;
+
 #[starknet::interface]
-pub trait IActions<IWorldDispatcher> {
-    fn create_game(ref self: IWorldDispatcher, game_id: u32);
-    fn join_game(ref self: IWorldDispatcher, game_id: u32, piece: u8);
-    fn start_game(ref self: IWorldDispatcher, game_id: u32);
-    fn roll_dice(ref self: IWorldDispatcher, game_id: u32, dice1: u8, dice2: u8);
-    fn buy_property(ref self: IWorldDispatcher, game_id: u32, position: u8);
-    fn buy_house(ref self: IWorldDispatcher, game_id: u32, position: u8);
-    fn sell_house(ref self: IWorldDispatcher, game_id: u32, position: u8);
-    fn next_turn(ref self: IWorldDispatcher, game_id: u32);
-    fn pay_rent(ref self: IWorldDispatcher, game_id: u32, property_position: u8);
+pub trait IActions<TContractState> {
+    fn create_game(ref self: TContractState, game_id: u32);
+    fn join_game(ref self: TContractState, game_id: u32, piece: u8);
+    fn start_game(ref self: TContractState, game_id: u32);
+    fn roll_dice(ref self: TContractState, game_id: u32, dice1: u8, dice2: u8);
+    fn buy_property(ref self: TContractState, game_id: u32, position: u8);
+    fn buy_house(ref self: TContractState, game_id: u32, position: u8);
+    fn sell_house(ref self: TContractState, game_id: u32, position: u8);
+    fn next_turn(ref self: TContractState, game_id: u32);
+    fn pay_rent(ref self: TContractState, game_id: u32, property_position: u8);
+    fn set_nft_contract(ref self: TContractState, nft_contract: ContractAddress);
 }
 
 #[dojo::contract]
@@ -17,8 +20,16 @@ mod actions {
     use dojo::event::EventStorage;
     use dojo::model::ModelStorage;
     use starkcity::models::{Game, GameMove, Player, Property};
+    use starkcity::tokens::erc1155::{IERC1155Dispatcher, IERC1155DispatcherTrait};
+    use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
     use starknet::{ContractAddress, get_block_timestamp, get_caller_address};
     use super::{IActions, calculate_rent};
+
+    #[storage]
+    struct Storage {
+        nft_contract: ContractAddress,
+        owner: ContractAddress,
+    }
 
     #[abi(embed_v0)]
     impl ActionsImpl of IActions<ContractState> {
@@ -32,7 +43,7 @@ mod actions {
                 started: false,
                 current_player: 0,
                 player_count: 0,
-                winner: 0.try_into().unwrap(),
+                winner: Zero::zero(),
             };
             world.write_model(@game);
 
@@ -44,7 +55,6 @@ mod actions {
 
         fn join_game(ref self: ContractState, game_id: u32, piece: u8) {
             let mut world = self.world_default();
-
             let caller = get_caller_address();
             let mut game: Game = world.read_model(game_id);
 
@@ -62,11 +72,8 @@ mod actions {
             };
             world.write_model(@player);
 
-            // set!(world, (player));
-
             game.player_count += 1;
             world.write_model(@game);
-            // set!(world, (game));
 
             world
                 .emit_event(
@@ -76,7 +83,6 @@ mod actions {
 
         fn start_game(ref self: ContractState, game_id: u32) {
             let mut world = self.world_default();
-
             let caller = get_caller_address();
             let mut game: Game = world.read_model(game_id);
 
@@ -93,7 +99,6 @@ mod actions {
 
         fn roll_dice(ref self: ContractState, game_id: u32, dice1: u8, dice2: u8) {
             let mut world = self.world_default();
-
             let caller = get_caller_address();
             let game: Game = world.read_model(game_id);
             let mut player: Player = world.read_model((game_id, caller));
@@ -145,6 +150,12 @@ mod actions {
             property.owner = caller;
             world.write_model(@player);
             world.write_model(@property);
+
+            // 🎯 MINT PROPERTY NFT
+            let nft = IERC1155Dispatcher { contract_address: self.nft_contract.read() };
+            let token_id: u256 = position.into();
+            nft.mint(caller, token_id, 1); // Mint 1 property NFT
+
             world
                 .emit_event(
                     @PropertyPurchased { game_id, player: caller, position, price: property.price },
@@ -169,6 +180,23 @@ mod actions {
             property.houses += 1;
             world.write_model(@player);
             world.write_model(@property);
+
+            // 🏠 MINT HOUSE/HOTEL NFT
+            let nft = IERC1155Dispatcher { contract_address: self.nft_contract.read() };
+
+            if property.houses == 5 {
+                // Hotel - burn 4 houses, mint 1 hotel
+                let house_token_id: u256 = (1000 + position.try_into().unwrap()).into();
+                nft.burn(caller, house_token_id, 4); // Burn 4 houses
+
+                let hotel_token_id: u256 = (2000 + position.try_into().unwrap()).into();
+                nft.mint(caller, hotel_token_id, 1); // Mint 1 hotel
+            } else {
+                // Regular house
+                let house_token_id: u256 = (1000 + position.try_into().unwrap()).into();
+                nft.mint(caller, house_token_id, 1); // Mint 1 house
+            }
+
             world
                 .emit_event(
                     @HouseBought { game_id, player: caller, position, houses: property.houses },
@@ -185,11 +213,27 @@ mod actions {
             assert(property.owner == caller, 'Not your property');
             assert(property.houses > 0, 'No houses to sell');
 
+            let nft = IERC1155Dispatcher { contract_address: self.nft_contract.read() };
+
+            if property.houses == 5 {
+                // Selling hotel - burn hotel, mint 4 houses
+                let hotel_token_id: u256 = (2000 + position.try_into().unwrap()).into();
+                nft.burn(caller, hotel_token_id, 1); // Burn hotel
+
+                let house_token_id: u256 = (1000 + position.try_into().unwrap()).into();
+                nft.mint(caller, house_token_id, 4); // Mint back 4 houses
+            } else {
+                // Selling regular house
+                let house_token_id: u256 = (1000 + position.try_into().unwrap()).into();
+                nft.burn(caller, house_token_id, 1); // Burn 1 house
+            }
+
             let sell_price = property.house_price / 2;
             player.money += sell_price;
             property.houses -= 1;
             world.write_model(@player);
             world.write_model(@property);
+
             world
                 .emit_event(
                     @HouseSold {
@@ -204,7 +248,6 @@ mod actions {
 
         fn next_turn(ref self: ContractState, game_id: u32) {
             let mut world = self.world_default();
-
             let mut game: Game = world.read_model(game_id);
 
             game.current_player = (game.current_player + 1) % game.player_count;
@@ -215,7 +258,6 @@ mod actions {
 
         fn pay_rent(ref self: ContractState, game_id: u32, property_position: u8) {
             let mut world = self.world_default();
-
             let caller = get_caller_address();
             let mut player: Player = world.read_model((game_id, caller));
             let property: Property = world.read_model((game_id, property_position));
@@ -223,9 +265,7 @@ mod actions {
             assert(!property.owner.is_zero(), 'Property not owned');
             assert(property.owner != caller, 'You own this property');
 
-            // Calculate rent based on houses
             let rent = calculate_rent(property.rent_base, property.houses);
-
             assert(player.money >= rent, 'Not enough money for rent');
 
             player.money -= rent;
@@ -244,6 +284,11 @@ mod actions {
                         position: property_position,
                     },
                 );
+        }
+
+        fn set_nft_contract(ref self: ContractState, nft_contract: ContractAddress) {
+            assert(get_caller_address() == self.owner.read(), 'UNAUTHORIZED');
+            self.nft_contract.write(nft_contract);
         }
     }
 
@@ -332,42 +377,26 @@ mod actions {
         pub amount: u32,
         pub position: u8,
     }
-
-    // Internal Helper Functions
+    // Internal Helper Functions (same as before - keeping your existing code)
     #[generate_trait]
     impl InternalImpl of InternalTrait {
         fn world_default(self: @ContractState) -> dojo::world::WorldStorage {
             self.world(@"starkcity")
         }
+
         fn initialize_properties(self: @ContractState, game_id: u32) {
             let mut world = self.world_default();
+            let zero_addr = Zero::zero();
 
-            let zero_addr = 0.try_into().unwrap();
-
-            // Array of properties: (position, price, rent, house_price, color_group)
             let properties = array![
-                (1_u8, 60_u32, 2_u32, 50_u32, 1_u8), // Mediterranean Avenue
-                (3, 60, 4, 50, 1), // Baltic Avenue
-                (6, 100, 6, 50, 2), // Oriental Avenue
-                (8, 100, 6, 50, 2), // Vermont Avenue
-                (9, 120, 8, 50, 2), // Connecticut Avenue
-                (11, 140, 10, 100, 3), // St. Charles Place
-                (13, 140, 10, 100, 3), // States Avenue
-                (14, 160, 12, 100, 3), // Virginia Avenue
-                (16, 180, 14, 100, 4), // St. James Place
-                (18, 180, 14, 100, 4), // Tennessee Avenue
-                (19, 200, 16, 100, 4), // New York Avenue
-                (21, 220, 18, 150, 5), // Kentucky Avenue
-                (23, 220, 18, 150, 5), // Indiana Avenue
-                (24, 240, 20, 150, 5), // Illinois Avenue
-                (26, 260, 22, 150, 6), // Atlantic Avenue
-                (27, 260, 22, 150, 6), // Ventnor Avenue
-                (29, 280, 24, 150, 6), // Marvin Gardens
-                (31, 300, 26, 200, 7), // Pacific Avenue
-                (32, 300, 26, 200, 7), // North Carolina Avenue
-                (34, 320, 28, 200, 7), // Pennsylvania Avenue
-                (37, 350, 35, 200, 8), // Park Place
-                (39, 400, 50, 200, 8) // Boardwalk
+                (1_u8, 60_u32, 2_u32, 50_u32, 1_u8), (3, 60, 4, 50, 1), (6, 100, 6, 50, 2),
+                (8, 100, 6, 50, 2), (9, 120, 8, 50, 2), (11, 140, 10, 100, 3),
+                (13, 140, 10, 100, 3), (14, 160, 12, 100, 3), (16, 180, 14, 100, 4),
+                (18, 180, 14, 100, 4), (19, 200, 16, 100, 4), (21, 220, 18, 150, 5),
+                (23, 220, 18, 150, 5), (24, 240, 20, 150, 5), (26, 260, 22, 150, 6),
+                (27, 260, 22, 150, 6), (29, 280, 24, 150, 6), (31, 300, 26, 200, 7),
+                (32, 300, 26, 200, 7), (34, 320, 28, 200, 7), (37, 350, 35, 200, 8),
+                (39, 400, 50, 200, 8),
             ];
 
             let mut i: u32 = 0;
@@ -388,7 +417,6 @@ mod actions {
                 };
 
                 world.write_model(@property);
-                // set!(world, (property));
                 i += 1;
             };
         }

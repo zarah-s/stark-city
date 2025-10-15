@@ -15,7 +15,6 @@ move = "sozo execute dojo_starter-actions move -c 1 --wait"
 [dependencies]
 dojo = "1.7.1"
 starknet = "2.12.2"
-# openzeppelin = "0.18.0"
 
 [[target.starknet-contract]]
 build-external-contracts = ["dojo::world::world_contract::world"]
