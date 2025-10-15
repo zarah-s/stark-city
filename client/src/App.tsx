@@ -203,12 +203,12 @@ export default function App() {
 
       if (gameMode === "online") {
         if (socketRef.current) {
-          await call("buyHouse", roomCode, propertyIndex);
           socketRef.current.emit("buyHouse", {
             roomCode,
             propertyPosition: propertyIndex,
             playerId: myPlayerId,
           });
+          await call("buyHouse", roomCode, propertyIndex);
         }
         return;
       }
@@ -254,12 +254,12 @@ export default function App() {
 
       if (gameMode === "online") {
         if (socketRef.current) {
-          await call("sellHouse", roomCode, propertyIndex);
           socketRef.current.emit("sellHouse", {
             roomCode,
             propertyPosition: propertyIndex,
             playerId: myPlayerId,
           });
+          await call("sellHouse", roomCode, propertyIndex);
         }
         return;
       }
@@ -637,11 +637,11 @@ export default function App() {
       if (gameMode === "online") {
         if (currentPlayer !== myPlayerId) return;
         if (socketRef.current) {
-          await call("rollDice", roomCode, die1, die2);
           socketRef.current.emit("rollDice", {
             roomCode,
             playerId: myPlayerId,
           });
+          await call("rollDice", roomCode, die1, die2);
         }
         return;
       }
@@ -728,12 +728,12 @@ export default function App() {
 
       if (gameMode === "online") {
         if (socketRef.current) {
-          await call("buyProperty", roomCode, prop.position);
           socketRef.current.emit("buyProperty", {
             roomCode,
             propertyPosition: prop.position,
             playerId: myPlayerId,
           });
+          await call("buyProperty", roomCode, prop.position);
         }
         return;
       }
