@@ -180,83 +180,93 @@ export default function App() {
   };
 
   // Buy house or hotel
-  const buyHouse = (propertyIndex: number) => {
-    const prop = gameProperties[propertyIndex];
-    if (!prop || prop.type !== "property" || !prop.housePrice) return;
+  const buyHouse = async (propertyIndex: number) => {
+    try {
+      const prop = gameProperties[propertyIndex];
+      if (!prop || prop.type !== "property" || !prop.housePrice) return;
 
-    if (gameMode === "online") {
-      if (socketRef.current) {
-        socketRef.current.emit("buyHouse", {
-          roomCode,
-          propertyPosition: propertyIndex,
-          playerId: myPlayerId,
-        });
+      if (gameMode === "online") {
+        if (socketRef.current) {
+          await call("buyHouse", roomCode, propertyIndex);
+          socketRef.current.emit("buyHouse", {
+            roomCode,
+            propertyPosition: propertyIndex,
+            playerId: myPlayerId,
+          });
+        }
+        return;
       }
-      return;
-    }
 
-    const player = players[currentPlayer];
-    if (prop.owner !== currentPlayer) return;
-    if (!ownsMonopoly(currentPlayer, prop.color)) {
-      setMessage("Need monopoly to build!");
-      addLog("Need all properties of this color");
-      return;
-    }
-    if (prop.houses >= 5) {
-      setMessage("Already has hotel!");
-      return;
-    }
-    if (player.money < prop.housePrice) {
-      setMessage("Not enough money!");
-      return;
-    }
+      const player = players[currentPlayer];
+      if (prop.owner !== currentPlayer) return;
+      if (!ownsMonopoly(currentPlayer, prop.color)) {
+        setMessage("Need monopoly to build!");
+        addLog("Need all properties of this color");
+        return;
+      }
+      if (prop.houses >= 5) {
+        setMessage("Already has hotel!");
+        return;
+      }
+      if (player.money < prop.housePrice) {
+        setMessage("Not enough money!");
+        return;
+      }
 
-    const newPlayers = [...players];
-    newPlayers[currentPlayer].money -= prop.housePrice;
-    setPlayers(newPlayers);
+      const newPlayers = [...players];
+      newPlayers[currentPlayer].money -= prop.housePrice;
+      setPlayers(newPlayers);
 
-    const newProps = [...gameProperties];
-    newProps[propertyIndex].houses += 1;
-    setGameProperties(newProps);
+      const newProps = [...gameProperties];
+      newProps[propertyIndex].houses += 1;
+      setGameProperties(newProps);
 
-    const buildingName =
-      newProps[propertyIndex].houses === 5 ? "hotel" : "house";
-    addLog(`Built ${buildingName} on ${prop.name}`);
-    setMessage(`Built ${buildingName}!`);
+      const buildingName =
+        newProps[propertyIndex].houses === 5 ? "hotel" : "house";
+      addLog(`Built ${buildingName} on ${prop.name}`);
+      setMessage(`Built ${buildingName}!`);
+    } catch (error: any) {
+      toast.error(error.message || "OOPPSS");
+    }
   };
 
   // Sell house or hotel
-  const sellHouse = (propertyIndex: number) => {
-    const prop = gameProperties[propertyIndex];
-    if (!prop || prop.type !== "property" || !prop.housePrice) return;
+  const sellHouse = async (propertyIndex: number) => {
+    try {
+      const prop = gameProperties[propertyIndex];
+      if (!prop || prop.type !== "property" || !prop.housePrice) return;
 
-    if (gameMode === "online") {
-      if (socketRef.current) {
-        socketRef.current.emit("sellHouse", {
-          roomCode,
-          propertyPosition: propertyIndex,
-          playerId: myPlayerId,
-        });
+      if (gameMode === "online") {
+        if (socketRef.current) {
+          await call("sellHouse", roomCode, propertyIndex);
+          socketRef.current.emit("sellHouse", {
+            roomCode,
+            propertyPosition: propertyIndex,
+            playerId: myPlayerId,
+          });
+        }
+        return;
       }
-      return;
+
+      const player = players[currentPlayer];
+      if (prop.owner !== currentPlayer) return;
+      if (prop.houses === 0) return;
+
+      const newPlayers = [...players];
+      newPlayers[currentPlayer].money += Math.floor(prop.housePrice / 2);
+      setPlayers(newPlayers);
+
+      const newProps = [...gameProperties];
+      const wasHotel = newProps[propertyIndex].houses === 5;
+      newProps[propertyIndex].houses -= 1;
+      setGameProperties(newProps);
+
+      const buildingName = wasHotel ? "hotel" : "house";
+      addLog(`Sold ${buildingName} on ${prop.name}`);
+      setMessage(`Sold ${buildingName}!`);
+    } catch (error: any) {
+      toast.error(error.message || "OOPPSS");
     }
-
-    const player = players[currentPlayer];
-    if (prop.owner !== currentPlayer) return;
-    if (prop.houses === 0) return;
-
-    const newPlayers = [...players];
-    newPlayers[currentPlayer].money += Math.floor(prop.housePrice / 2);
-    setPlayers(newPlayers);
-
-    const newProps = [...gameProperties];
-    const wasHotel = newProps[propertyIndex].houses === 5;
-    newProps[propertyIndex].houses -= 1;
-    setGameProperties(newProps);
-
-    const buildingName = wasHotel ? "hotel" : "house";
-    addLog(`Sold ${buildingName} on ${prop.name}`);
-    setMessage(`Sold ${buildingName}!`);
   };
 
   const connectSocket = (room: string, name: string, host: boolean) => {
@@ -388,11 +398,29 @@ export default function App() {
       setCurrentProperty(null);
     });
 
-    socket.on("turnChanged", (data: any) => {
-      setCurrentPlayer(data.currentPlayer);
-      setCanRoll(data.currentPlayer === myPlayerId);
-      setMessage(`${data.playerName}'s turn`);
-      // stopTurnTimer();
+    socket.on("turnChanged", async (data: any) => {
+      try {
+        setCurrentPlayer(data.currentPlayer);
+        setCanRoll(data.currentPlayer === myPlayerId);
+        setMessage(`${data.playerName}'s turn`);
+        if (data.currentPlayer === myPlayerId) {
+          await call("nextTurn", data.roomCode);
+        }
+        // stopTurnTimer();
+      } catch (error: any) {
+        toast.error(error.message || "OOPPSS");
+      }
+    });
+
+    socket.on("payRent", async (data: any) => {
+      try {
+        if (data.playerId === myPlayerId) {
+          await call("payRent", data.roomCode, data.position);
+        }
+        // stopTurnTimer();
+      } catch (error: any) {
+        toast.error(error.message || "OOPPSS");
+      }
     });
 
     socket.on("houseBought", (data: any) => {
@@ -475,10 +503,15 @@ export default function App() {
     }
   };
 
-  const startOnlineGame = () => {
-    if (!isHost || connectedPlayers.length < 2) return;
-    if (socketRef.current) {
-      socketRef.current.emit("startGame", { roomCode });
+  const startOnlineGame = async () => {
+    try {
+      if (!isHost || connectedPlayers.length < 2) return;
+      if (socketRef.current) {
+        await call("startGame", roomCode);
+        socketRef.current.emit("startGame", { roomCode });
+      }
+    } catch (error: any) {
+      toast.error(error.message || "OOPPSS");
     }
   };
 
@@ -567,130 +600,143 @@ export default function App() {
     }, 500);
   };
 
-  const rollDice = () => {
-    if (!canRoll || isRolling) return;
-    // stopTurnTimer();
-    playDiceSound();
-    if (gameMode === "online") {
-      if (currentPlayer !== myPlayerId) return;
-      if (socketRef.current) {
-        socketRef.current.emit("rollDice", { roomCode, playerId: myPlayerId });
-      }
-      return;
-    }
-
-    setIsRolling(true);
-    setCanRoll(false);
-
-    const die1 = Math.floor(Math.random() * 6) + 1;
-    const die2 = Math.floor(Math.random() * 6) + 1;
-    setDice([die1, die2]);
-
-    setTimeout(() => {
-      const total = die1 + die2;
-      const newPlayers = [...players];
-      const player = newPlayers[currentPlayer];
-      let newPos = player.position + total;
-
-      if (newPos >= 40) {
-        player.money += 200;
-        addLog(`${player.name} passed GO! +$200`);
-        newPos = newPos % 40;
+  const rollDice = async () => {
+    try {
+      if (!canRoll || isRolling) return;
+      const die1 = Math.floor(Math.random() * 6) + 1;
+      const die2 = Math.floor(Math.random() * 6) + 1;
+      // stopTurnTimer();
+      playDiceSound();
+      if (gameMode === "online") {
+        if (currentPlayer !== myPlayerId) return;
+        if (socketRef.current) {
+          await call("rollDice", roomCode, die1, die2);
+          socketRef.current.emit("rollDice", {
+            roomCode,
+            playerId: myPlayerId,
+          });
+        }
+        return;
       }
 
-      player.position = newPos;
-      const prop = gameProperties[newPos];
+      setIsRolling(true);
+      setCanRoll(false);
 
-      if (prop.name === "Go To Jail") {
-        player.position = 10;
-        addLog(`${player.name} to Jail!`);
+      setDice([die1, die2]);
+
+      setTimeout(() => {
+        const total = die1 + die2;
+        const newPlayers = [...players];
+        const player = newPlayers[currentPlayer];
+        let newPos = player.position + total;
+
+        if (newPos >= 40) {
+          player.money += 200;
+          addLog(`${player.name} passed GO! +$200`);
+          newPos = newPos % 40;
+        }
+
+        player.position = newPos;
+        const prop = gameProperties[newPos];
+
+        if (prop.name === "Go To Jail") {
+          player.position = 10;
+          addLog(`${player.name} to Jail!`);
+          setPlayers(newPlayers);
+          setIsRolling(false);
+          setTimeout(() => {
+            setCurrentPlayer((currentPlayer + 1) % players.length);
+            setCanRoll(true);
+          }, 2000);
+          return;
+        } else if (prop.name === "Income Tax") {
+          player.money -= 200;
+          addLog(`${player.name} paid $200 tax`);
+        } else if (prop.name === "Luxury Tax") {
+          player.money -= 100;
+          addLog(`${player.name} paid $100 tax`);
+        } else if (prop.price > 0) {
+          if (prop.owner === null) {
+            setCurrentProperty(prop);
+            setShowBuyModal(true);
+            if (player.isComputer) computerDecision(prop);
+            setPlayers(newPlayers);
+            setIsRolling(false);
+            return;
+          } else if (prop.owner !== currentPlayer) {
+            const rent = prop.rent[prop.houses];
+            player.money -= rent;
+            newPlayers[prop.owner].money += rent;
+            addLog(`Paid ${rent} rent`);
+            if (prop.houses > 0) {
+              const buildingType =
+                prop.houses === 5
+                  ? "hotel"
+                  : `${prop.houses} house${prop.houses > 1 ? "s" : ""}`;
+              addLog(`Property has ${buildingType}`);
+            }
+          }
+        } else if (prop.name === "Chance" || prop.name === "Community Chest") {
+          const amt = Math.random() > 0.5 ? 50 : -50;
+          player.money += amt;
+          addLog(`${amt > 0 ? "+" : ""}${amt}`);
+        }
+
         setPlayers(newPlayers);
         setIsRolling(false);
+
         setTimeout(() => {
           setCurrentPlayer((currentPlayer + 1) % players.length);
           setCanRoll(true);
         }, 2000);
-        return;
-      } else if (prop.name === "Income Tax") {
-        player.money -= 200;
-        addLog(`${player.name} paid $200 tax`);
-      } else if (prop.name === "Luxury Tax") {
-        player.money -= 100;
-        addLog(`${player.name} paid $100 tax`);
-      } else if (prop.price > 0) {
-        if (prop.owner === null) {
-          setCurrentProperty(prop);
-          setShowBuyModal(true);
-          if (player.isComputer) computerDecision(prop);
-          setPlayers(newPlayers);
-          setIsRolling(false);
-          return;
-        } else if (prop.owner !== currentPlayer) {
-          const rent = prop.rent[prop.houses];
-          player.money -= rent;
-          newPlayers[prop.owner].money += rent;
-          addLog(`Paid ${rent} rent`);
-          if (prop.houses > 0) {
-            const buildingType =
-              prop.houses === 5
-                ? "hotel"
-                : `${prop.houses} house${prop.houses > 1 ? "s" : ""}`;
-            addLog(`Property has ${buildingType}`);
-          }
-        }
-      } else if (prop.name === "Chance" || prop.name === "Community Chest") {
-        const amt = Math.random() > 0.5 ? 50 : -50;
-        player.money += amt;
-        addLog(`${amt > 0 ? "+" : ""}${amt}`);
-      }
-
-      setPlayers(newPlayers);
-      setIsRolling(false);
-
-      setTimeout(() => {
-        setCurrentPlayer((currentPlayer + 1) % players.length);
-        setCanRoll(true);
-      }, 2000);
-    }, 1000);
+      }, 1000);
+    } catch (error: any) {
+      toast.error(error.message || "OOPPSS");
+    }
   };
 
-  const buyProperty = (prop: Property) => {
-    if (!prop) return;
+  const buyProperty = async (prop: Property) => {
+    try {
+      if (!prop) return;
 
-    if (gameMode === "online") {
-      if (socketRef.current) {
-        socketRef.current.emit("buyProperty", {
-          roomCode,
-          propertyPosition: prop.position,
-          playerId: myPlayerId,
-        });
+      if (gameMode === "online") {
+        if (socketRef.current) {
+          await call("buyProperty", roomCode, prop.position);
+          socketRef.current.emit("buyProperty", {
+            roomCode,
+            propertyPosition: prop.position,
+            playerId: myPlayerId,
+          });
+        }
+        return;
       }
-      return;
-    }
 
-    const newPlayers = [...players];
-    const player = newPlayers[currentPlayer];
+      const newPlayers = [...players];
+      const player = newPlayers[currentPlayer];
 
-    if (player.money >= prop.price) {
-      player.money -= prop.price;
-      player.properties.push(prop.position);
+      if (player.money >= prop.price) {
+        player.money -= prop.price;
+        player.properties.push(prop.position);
 
-      const newProps = [...gameProperties];
-      newProps[prop.position].owner = currentPlayer;
-      setGameProperties(newProps);
+        const newProps = [...gameProperties];
+        newProps[prop.position].owner = currentPlayer;
+        setGameProperties(newProps);
 
-      addLog(`${player.name} bought ${prop.name}`);
-      setPlayers(newPlayers);
-    }
+        addLog(`${player.name} bought ${prop.name}`);
+        setPlayers(newPlayers);
+      }
 
-    setShowBuyModal(false);
-    setCurrentProperty(null);
+      setShowBuyModal(false);
+      setCurrentProperty(null);
 
-    if (gameMode === "computer") {
-      setTimeout(() => {
-        setCurrentPlayer((currentPlayer + 1) % players.length);
-        setCanRoll(true);
-      }, 1500);
+      if (gameMode === "computer") {
+        setTimeout(() => {
+          setCurrentPlayer((currentPlayer + 1) % players.length);
+          setCanRoll(true);
+        }, 1500);
+      }
+    } catch (error: any) {
+      toast.error(error.message || "OOPPSS");
     }
   };
 
