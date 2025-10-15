@@ -23,6 +23,8 @@ import { PropertySpace } from "./components/PropertySpace";
 import { DiceIcon } from "./components/DiceIcon";
 import type { AccountInterface } from "starknet";
 import { useAccount, useConnect, useDisconnect } from "@starknet-react/core";
+import useInteraction from "./hooks/interaction";
+import { toast } from "react-toastify";
 
 interface Wallet {
   IsConnected: boolean;
@@ -37,6 +39,7 @@ declare global {
 export default function App() {
   const { account } = useAccount();
   const { connectAsync, connectors } = useConnect();
+  const { disconnectAsync } = useDisconnect();
   const [showSplash, setShowSplash] = useState(true);
   const [gameMode, setGameMode] = useState<"menu" | "computer" | "online">(
     "menu"
@@ -67,14 +70,13 @@ export default function App() {
   const [showManageProperties, setShowManageProperties] = useState(false);
   const [turnTimer, setTurnTimer] = useState(20);
   const timerRef = useRef<any>(null);
+  const { call } = useInteraction();
 
   /// CONNECT WALLET AND ENTER GAME
 
   async function enterGame(mode: "computer" | "online") {
     try {
-      console.log(window.Wallet);
       if (!window.Wallet?.IsConnected) {
-        console.log("connected here");
         await connectAsync({ connector: connectors[0] });
       }
       setGameMode(mode);
@@ -86,6 +88,7 @@ export default function App() {
   useEffect(() => {
     (async function () {
       try {
+        // await disconnectAsync();
         if (showSplash) return;
         if (!account) return;
         if (window.Wallet?.Account) return;
@@ -267,13 +270,27 @@ export default function App() {
       socket.emit("joinRoom", { room, name, isHost: host });
     });
 
-    socket.on("roomJoined", (data: any) => {
-      setConnectedPlayers(data.players);
-      setMyPlayerId(data.playerId);
-      setRoomCode(data.roomCode);
-      setIsHost(data.isHost);
-      addLog(`You joined`);
-      setMessage(`Room: ${data.roomCode}`);
+    socket.on("roomJoined", async (data: any) => {
+      try {
+        const player = data.players.find(
+          (fd: any) => fd.id.toString() === data.playerId.toString()
+        );
+        if (!player) return;
+        const pieceIndex = AVAILABLE_PIECES.findIndex(
+          (fd) => fd === player.piece
+        );
+        if (pieceIndex === -1) return;
+
+        await call("joinGame", data.roomCode, pieceIndex);
+        setConnectedPlayers(data.players);
+        setMyPlayerId(data.playerId);
+        setRoomCode(data.roomCode);
+        setIsHost(data.isHost);
+        addLog(`You joined`);
+        setMessage(`Room: ${data.roomCode}`);
+      } catch (error: any) {
+        toast.error(error.message || "OOPPSS");
+      }
     });
 
     socket.on("playerJoined", (data: any) => {
@@ -437,15 +454,25 @@ export default function App() {
     };
   }, []);
 
-  const createRoom = () => {
-    if (!playerName.trim()) return;
-    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-    connectSocket(code, playerName, true);
+  const createRoom = async () => {
+    try {
+      if (!playerName.trim()) return;
+      const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+      await call("createGame", code);
+      connectSocket(code, playerName, true);
+    } catch (error: any) {
+      toast.error(error.message || "OOPPSS");
+    }
   };
 
-  const joinRoom = (roomCode: string) => {
-    if (!roomCode.trim() || !playerName.trim()) return;
-    connectSocket(roomCode, playerName, false);
+  const joinRoom = async (roomCode: string) => {
+    try {
+      if (!roomCode.trim() || !playerName.trim()) return;
+
+      connectSocket(roomCode, playerName, false);
+    } catch (error: any) {
+      toast.error(error.message || "OOPPSS");
+    }
   };
 
   const startOnlineGame = () => {
@@ -877,7 +904,9 @@ export default function App() {
                     value={roomCode}
                     onChange={(e) => {
                       setRoomCode(e.target.value.toUpperCase());
-                      joinRoom(e.target.value.trim().toUpperCase());
+                      if (e.target.value.trim().length == 6) {
+                        joinRoom(e.target.value.trim().toUpperCase());
+                      }
                     }}
                     placeholder="Enter room code"
                     className="w-full px-4 py-3 border-4 border-cyan-500 rounded-lg uppercase mb-4 bg-gray-800 text-white font-bold tracking-widest text-center text-2xl"
