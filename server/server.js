@@ -18,6 +18,8 @@ const io = new Server(server, {
 });
 
 const rooms = new Map();
+const disconnectedPlayers = new Map(); // For reconnection
+
 const playerColors = [
   "bg-blue-600",
   "bg-red-600",
@@ -25,6 +27,65 @@ const playerColors = [
   "bg-yellow-600",
 ];
 const availablePieces = ["🚗", "🎩", "🚢", "🐕", "🐈", "👞", "🎸", "⚓"];
+
+const CHANCE_CARDS = [
+  {
+    type: "money",
+    title: "BANK ERROR!",
+    description: "Bank error in your favor. Collect $200",
+    amount: 200,
+  },
+  {
+    type: "money",
+    title: "DOCTOR'S FEE",
+    description: "Doctor's fee. Pay $50",
+    amount: -50,
+  },
+  {
+    type: "money",
+    title: "SALE OF STOCK",
+    description: "From sale of stock you get $50",
+    amount: 50,
+  },
+  {
+    type: "jail_free",
+    title: "GET OUT OF JAIL FREE",
+    description: "This card may be kept until needed",
+  },
+  { type: "jail", title: "GO TO JAIL", description: "Go directly to jail" },
+  {
+    type: "move",
+    title: "ADVANCE TO GO",
+    description: "Advance to GO. Collect $200",
+    position: 0,
+  },
+];
+
+const COMMUNITY_CHEST_CARDS = [
+  {
+    type: "money",
+    title: "LIFE INSURANCE",
+    description: "Life insurance matures. Collect $100",
+    amount: 100,
+  },
+  {
+    type: "money",
+    title: "HOSPITAL FEES",
+    description: "Doctor's fees. Pay $50",
+    amount: -50,
+  },
+  {
+    type: "jail_free",
+    title: "GET OUT OF JAIL FREE",
+    description: "This card may be kept until needed",
+  },
+  {
+    type: "money",
+    title: "INHERITANCE",
+    description: "You inherit $100",
+    amount: 100,
+  },
+];
 
 const properties = [
   {
@@ -36,6 +97,7 @@ const properties = [
     owner: null,
     houses: 0,
     type: "special",
+    mortgaged: false,
   },
   {
     name: "Mediterranean Avenue",
@@ -47,6 +109,7 @@ const properties = [
     houses: 0,
     type: "property",
     housePrice: 50,
+    mortgaged: false,
   },
   {
     name: "Community Chest",
@@ -57,6 +120,7 @@ const properties = [
     owner: null,
     houses: 0,
     type: "special",
+    mortgaged: false,
   },
   {
     name: "Baltic Avenue",
@@ -68,6 +132,7 @@ const properties = [
     houses: 0,
     type: "property",
     housePrice: 50,
+    mortgaged: false,
   },
   {
     name: "Income Tax",
@@ -78,6 +143,7 @@ const properties = [
     owner: null,
     houses: 0,
     type: "special",
+    mortgaged: false,
   },
   {
     name: "Reading Railroad",
@@ -88,6 +154,7 @@ const properties = [
     owner: null,
     houses: 0,
     type: "railroad",
+    mortgaged: false,
   },
   {
     name: "Oriental Avenue",
@@ -99,6 +166,7 @@ const properties = [
     houses: 0,
     type: "property",
     housePrice: 50,
+    mortgaged: false,
   },
   {
     name: "Chance",
@@ -109,6 +177,7 @@ const properties = [
     owner: null,
     houses: 0,
     type: "special",
+    mortgaged: false,
   },
   {
     name: "Vermont Avenue",
@@ -120,6 +189,7 @@ const properties = [
     houses: 0,
     type: "property",
     housePrice: 50,
+    mortgaged: false,
   },
   {
     name: "Connecticut Avenue",
@@ -131,6 +201,7 @@ const properties = [
     houses: 0,
     type: "property",
     housePrice: 50,
+    mortgaged: false,
   },
   {
     name: "Just Visiting",
@@ -141,6 +212,7 @@ const properties = [
     owner: null,
     houses: 0,
     type: "special",
+    mortgaged: false,
   },
   {
     name: "St. Charles Place",
@@ -152,6 +224,7 @@ const properties = [
     houses: 0,
     type: "property",
     housePrice: 100,
+    mortgaged: false,
   },
   {
     name: "Electric Company",
@@ -162,6 +235,7 @@ const properties = [
     owner: null,
     houses: 0,
     type: "utility",
+    mortgaged: false,
   },
   {
     name: "States Avenue",
@@ -173,6 +247,7 @@ const properties = [
     houses: 0,
     type: "property",
     housePrice: 100,
+    mortgaged: false,
   },
   {
     name: "Virginia Avenue",
@@ -184,6 +259,7 @@ const properties = [
     houses: 0,
     type: "property",
     housePrice: 100,
+    mortgaged: false,
   },
   {
     name: "Pennsylvania Railroad",
@@ -194,6 +270,7 @@ const properties = [
     owner: null,
     houses: 0,
     type: "railroad",
+    mortgaged: false,
   },
   {
     name: "St. James Place",
@@ -205,6 +282,7 @@ const properties = [
     houses: 0,
     type: "property",
     housePrice: 100,
+    mortgaged: false,
   },
   {
     name: "Community Chest",
@@ -215,6 +293,7 @@ const properties = [
     owner: null,
     houses: 0,
     type: "special",
+    mortgaged: false,
   },
   {
     name: "Tennessee Avenue",
@@ -226,6 +305,7 @@ const properties = [
     houses: 0,
     type: "property",
     housePrice: 100,
+    mortgaged: false,
   },
   {
     name: "New York Avenue",
@@ -237,6 +317,7 @@ const properties = [
     houses: 0,
     type: "property",
     housePrice: 100,
+    mortgaged: false,
   },
   {
     name: "Free Parking",
@@ -247,6 +328,7 @@ const properties = [
     owner: null,
     houses: 0,
     type: "special",
+    mortgaged: false,
   },
   {
     name: "Kentucky Avenue",
@@ -258,6 +340,7 @@ const properties = [
     houses: 0,
     type: "property",
     housePrice: 150,
+    mortgaged: false,
   },
   {
     name: "Chance",
@@ -268,6 +351,7 @@ const properties = [
     owner: null,
     houses: 0,
     type: "special",
+    mortgaged: false,
   },
   {
     name: "Indiana Avenue",
@@ -279,6 +363,7 @@ const properties = [
     houses: 0,
     type: "property",
     housePrice: 150,
+    mortgaged: false,
   },
   {
     name: "Illinois Avenue",
@@ -290,6 +375,7 @@ const properties = [
     houses: 0,
     type: "property",
     housePrice: 150,
+    mortgaged: false,
   },
   {
     name: "B. & O. Railroad",
@@ -300,6 +386,7 @@ const properties = [
     owner: null,
     houses: 0,
     type: "railroad",
+    mortgaged: false,
   },
   {
     name: "Atlantic Avenue",
@@ -311,6 +398,7 @@ const properties = [
     houses: 0,
     type: "property",
     housePrice: 150,
+    mortgaged: false,
   },
   {
     name: "Ventnor Avenue",
@@ -322,6 +410,7 @@ const properties = [
     houses: 0,
     type: "property",
     housePrice: 150,
+    mortgaged: false,
   },
   {
     name: "Water Works",
@@ -332,6 +421,7 @@ const properties = [
     owner: null,
     houses: 0,
     type: "utility",
+    mortgaged: false,
   },
   {
     name: "Marvin Gardens",
@@ -343,6 +433,7 @@ const properties = [
     houses: 0,
     type: "property",
     housePrice: 150,
+    mortgaged: false,
   },
   {
     name: "Go To Jail",
@@ -353,6 +444,7 @@ const properties = [
     owner: null,
     houses: 0,
     type: "special",
+    mortgaged: false,
   },
   {
     name: "Pacific Avenue",
@@ -364,6 +456,7 @@ const properties = [
     houses: 0,
     type: "property",
     housePrice: 200,
+    mortgaged: false,
   },
   {
     name: "North Carolina Avenue",
@@ -375,6 +468,7 @@ const properties = [
     houses: 0,
     type: "property",
     housePrice: 200,
+    mortgaged: false,
   },
   {
     name: "Community Chest",
@@ -385,6 +479,7 @@ const properties = [
     owner: null,
     houses: 0,
     type: "special",
+    mortgaged: false,
   },
   {
     name: "Pennsylvania Avenue",
@@ -396,6 +491,7 @@ const properties = [
     houses: 0,
     type: "property",
     housePrice: 200,
+    mortgaged: false,
   },
   {
     name: "Short Line",
@@ -406,6 +502,7 @@ const properties = [
     owner: null,
     houses: 0,
     type: "railroad",
+    mortgaged: false,
   },
   {
     name: "Chance",
@@ -416,6 +513,7 @@ const properties = [
     owner: null,
     houses: 0,
     type: "special",
+    mortgaged: false,
   },
   {
     name: "Park Place",
@@ -427,6 +525,7 @@ const properties = [
     houses: 0,
     type: "property",
     housePrice: 200,
+    mortgaged: false,
   },
   {
     name: "Luxury Tax",
@@ -437,6 +536,7 @@ const properties = [
     owner: null,
     houses: 0,
     type: "special",
+    mortgaged: false,
   },
   {
     name: "Boardwalk",
@@ -448,6 +548,7 @@ const properties = [
     houses: 0,
     type: "property",
     housePrice: 200,
+    mortgaged: false,
   },
 ];
 
@@ -461,6 +562,7 @@ function createRoom(roomCode) {
     dice: [1, 1],
     gameLog: [],
     turnInProgress: false,
+    jailTurns: {},
   };
 }
 
@@ -479,12 +581,43 @@ function broadcastGameState(roomCode) {
   });
 }
 
-// Helper function to check if player owns all properties of a color
 function ownsMonopoly(gameRoom, playerId, color) {
   const colorProperties = gameRoom.properties.filter(
     (p) => p.color === color && p.type === "property"
   );
   return colorProperties.every((p) => p.owner === playerId);
+}
+
+function checkBankruptcy(gameRoom) {
+  const bankruptPlayers = [];
+  gameRoom.players.forEach((player, idx) => {
+    if (player.money < 0 && !player.bankrupt) {
+      player.bankrupt = true;
+      player.isActive = false;
+      bankruptPlayers.push(player.name);
+      gameRoom.gameLog.push(`${player.name} is BANKRUPT!`);
+
+      // Transfer properties back to bank
+      gameRoom.properties.forEach((prop) => {
+        if (prop.owner === idx) {
+          prop.owner = null;
+          prop.houses = 0;
+          prop.mortgaged = false;
+        }
+      });
+    }
+  });
+
+  const activePlayers = gameRoom.players.filter((p) => !p.bankrupt);
+  if (activePlayers.length === 1) {
+    gameRoom.gameLog.push(`🎉 ${activePlayers[0].name} WINS! 🎉`);
+    io.to(gameRoom.code).emit("gameEnded", {
+      message: `${activePlayers[0].name} wins!`,
+      winner: activePlayers[0],
+    });
+    return activePlayers[0];
+  }
+  return null;
 }
 
 io.on("connection", (socket) => {
@@ -525,6 +658,10 @@ io.on("connection", (socket) => {
       color: playerColors[playerId % playerColors.length],
       piece: availablePieces[playerId % availablePieces.length],
       isComputer: false,
+      isActive: true,
+      bankrupt: false,
+      inJail: false,
+      getOutOfJailFree: 0,
     };
 
     gameRoom.players.push(newPlayer);
@@ -589,16 +726,25 @@ io.on("connection", (socket) => {
     console.log(`🎮 Game started in room ${roomCode}`);
   });
 
+  socket.on("chat", ({ roomCode, playerId, message }) => {
+    const gameRoom = rooms.get(roomCode);
+    if (!gameRoom) return;
+
+    const player = gameRoom.players[playerId];
+    if (!player) return;
+
+    io.to(roomCode).emit("chat", {
+      playerId,
+      playerName: player.name,
+      message,
+    });
+  });
+
   socket.on("rollDice", ({ roomCode, playerId }) => {
     const gameRoom = rooms.get(roomCode);
 
-    if (!gameRoom) {
-      socket.emit("error", { message: "Room not found" });
-      return;
-    }
-
-    if (!gameRoom.gameStarted) {
-      socket.emit("error", { message: "Game not started" });
+    if (!gameRoom || !gameRoom.gameStarted) {
+      socket.emit("error", { message: "Invalid game state" });
       return;
     }
 
@@ -627,6 +773,46 @@ io.on("connection", (socket) => {
     });
 
     setTimeout(() => {
+      // Handle jail
+      if (player.inJail) {
+        const jailTurns = gameRoom.jailTurns[playerId] || 0;
+        if (die1 === die2) {
+          player.inJail = false;
+          gameRoom.jailTurns[playerId] = 0;
+          gameRoom.gameLog.push(
+            `${player.name} rolled doubles and escaped jail!`
+          );
+        } else {
+          gameRoom.jailTurns[playerId] = jailTurns + 1;
+          if (gameRoom.jailTurns[playerId] >= 3) {
+            player.inJail = false;
+            player.money -= 50;
+            gameRoom.jailTurns[playerId] = 0;
+            gameRoom.gameLog.push(`${player.name} paid $50 to leave jail`);
+          } else {
+            gameRoom.gameLog.push(
+              `${player.name} stayed in jail. ${
+                3 - gameRoom.jailTurns[playerId]
+              } turns left.`
+            );
+            gameRoom.turnInProgress = false;
+            gameRoom.currentPlayer =
+              (gameRoom.currentPlayer + 1) % gameRoom.players.length;
+            while (gameRoom.players[gameRoom.currentPlayer].bankrupt) {
+              gameRoom.currentPlayer =
+                (gameRoom.currentPlayer + 1) % gameRoom.players.length;
+            }
+            io.to(roomCode).emit("turnChanged", {
+              currentPlayer: gameRoom.currentPlayer,
+              playerName: gameRoom.players[gameRoom.currentPlayer].name,
+              roomCode,
+            });
+            broadcastGameState(roomCode);
+            return;
+          }
+        }
+      }
+
       const diceTotal = die1 + die2;
       const oldPosition = player.position;
       let newPosition = oldPosition + diceTotal;
@@ -645,6 +831,8 @@ io.on("connection", (socket) => {
 
       if (property.name === "Go To Jail") {
         player.position = 10;
+        player.inJail = true;
+        gameRoom.jailTurns[playerId] = 0;
         message = `${player.name} went to Jail!`;
         gameRoom.gameLog.push(message);
       } else if (property.name === "Income Tax") {
@@ -655,15 +843,42 @@ io.on("connection", (socket) => {
         player.money -= 100;
         message = `${player.name} paid $100 luxury tax`;
         gameRoom.gameLog.push(message);
-      } else if (
-        property.name === "Chance" ||
-        property.name === "Community Chest"
-      ) {
-        const amount = Math.random() > 0.5 ? 50 : -50;
-        player.money += amount;
-        message = `${player.name} ${
-          amount > 0 ? "received" : "paid"
-        } $${Math.abs(amount)}`;
+      } else if (property.name === "Chance") {
+        const card =
+          CHANCE_CARDS[Math.floor(Math.random() * CHANCE_CARDS.length)];
+        if (card.type === "money") {
+          player.money += card.amount;
+          message = `${player.name} ${
+            card.amount > 0 ? "received" : "paid"
+          } $${Math.abs(card.amount)}`;
+        } else if (card.type === "jail") {
+          player.position = 10;
+          player.inJail = true;
+          gameRoom.jailTurns[playerId] = 0;
+          message = `${player.name} went to Jail!`;
+        } else if (card.type === "jail_free") {
+          player.getOutOfJailFree += 1;
+          message = `${player.name} got Get Out of Jail Free card!`;
+        } else if (card.type === "move" && card.position !== undefined) {
+          player.position = card.position;
+          if (card.position === 0) player.money += 200;
+          message = `${player.name} advanced to ${property.name}`;
+        }
+        gameRoom.gameLog.push(message);
+      } else if (property.name === "Community Chest") {
+        const card =
+          COMMUNITY_CHEST_CARDS[
+            Math.floor(Math.random() * COMMUNITY_CHEST_CARDS.length)
+          ];
+        if (card.type === "money") {
+          player.money += card.amount;
+          message = `${player.name} ${
+            card.amount > 0 ? "received" : "paid"
+          } $${Math.abs(card.amount)}`;
+        } else if (card.type === "jail_free") {
+          player.getOutOfJailFree += 1;
+          message = `${player.name} got Get Out of Jail Free card!`;
+        }
         gameRoom.gameLog.push(message);
       } else if (property.price > 0) {
         if (property.owner === null) {
@@ -676,7 +891,7 @@ io.on("connection", (socket) => {
             propertyPrice: property.price,
             playerMoney: player.money,
           });
-        } else if (property.owner !== playerId) {
+        } else if (property.owner !== playerId && !property.mortgaged) {
           const rent = property.rent[property.houses];
           io.to(roomCode).emit("payRent", {
             playerId,
@@ -689,8 +904,6 @@ io.on("connection", (socket) => {
             gameRoom.players[property.owner].name
           }`;
           gameRoom.gameLog.push(message);
-        } else {
-          message = `${player.name} owns ${property.name}`;
         }
       }
 
@@ -701,12 +914,17 @@ io.on("connection", (socket) => {
         message: message,
       });
 
+      checkBankruptcy(gameRoom);
       broadcastGameState(roomCode);
 
       if (shouldSwitchTurn) {
         setTimeout(() => {
           gameRoom.currentPlayer =
             (gameRoom.currentPlayer + 1) % gameRoom.players.length;
+          while (gameRoom.players[gameRoom.currentPlayer].bankrupt) {
+            gameRoom.currentPlayer =
+              (gameRoom.currentPlayer + 1) % gameRoom.players.length;
+          }
           gameRoom.turnInProgress = false;
 
           io.to(roomCode).emit("turnChanged", {
@@ -767,6 +985,10 @@ io.on("connection", (socket) => {
     setTimeout(() => {
       gameRoom.currentPlayer =
         (gameRoom.currentPlayer + 1) % gameRoom.players.length;
+      while (gameRoom.players[gameRoom.currentPlayer].bankrupt) {
+        gameRoom.currentPlayer =
+          (gameRoom.currentPlayer + 1) % gameRoom.players.length;
+      }
       gameRoom.turnInProgress = false;
 
       io.to(roomCode).emit("turnChanged", {
@@ -806,6 +1028,10 @@ io.on("connection", (socket) => {
     setTimeout(() => {
       gameRoom.currentPlayer =
         (gameRoom.currentPlayer + 1) % gameRoom.players.length;
+      while (gameRoom.players[gameRoom.currentPlayer].bankrupt) {
+        gameRoom.currentPlayer =
+          (gameRoom.currentPlayer + 1) % gameRoom.players.length;
+      }
       gameRoom.turnInProgress = false;
 
       io.to(roomCode).emit("turnChanged", {
@@ -818,7 +1044,6 @@ io.on("connection", (socket) => {
     }, 1500);
   });
 
-  // NEW: Skip turn when timer runs out
   socket.on("skipTurn", ({ roomCode, playerId }) => {
     const gameRoom = rooms.get(roomCode);
 
@@ -844,6 +1069,10 @@ io.on("connection", (socket) => {
 
     gameRoom.currentPlayer =
       (gameRoom.currentPlayer + 1) % gameRoom.players.length;
+    while (gameRoom.players[gameRoom.currentPlayer].bankrupt) {
+      gameRoom.currentPlayer =
+        (gameRoom.currentPlayer + 1) % gameRoom.players.length;
+    }
 
     io.to(roomCode).emit("turnChanged", {
       currentPlayer: gameRoom.currentPlayer,
@@ -858,7 +1087,6 @@ io.on("connection", (socket) => {
     );
   });
 
-  // NEW: Buy House/Hotel
   socket.on("buyHouse", ({ roomCode, propertyPosition, playerId }) => {
     const gameRoom = rooms.get(roomCode);
 
@@ -887,6 +1115,11 @@ io.on("connection", (socket) => {
 
     if (property.houses >= 5) {
       socket.emit("error", { message: "Already has hotel" });
+      return;
+    }
+
+    if (property.mortgaged) {
+      socket.emit("error", { message: "Cannot build on mortgaged property" });
       return;
     }
 
@@ -922,7 +1155,6 @@ io.on("connection", (socket) => {
     console.log(`🏠 ${player.name} built ${buildingName} on ${property.name}`);
   });
 
-  // NEW: Sell House/Hotel
   socket.on("sellHouse", ({ roomCode, propertyPosition, playerId }) => {
     const gameRoom = rooms.get(roomCode);
 
@@ -960,7 +1192,7 @@ io.on("connection", (socket) => {
     player.money += sellPrice;
 
     const buildingName = wasHotel ? "hotel" : "house";
-    const message = `${player.name} sold ${buildingName} on ${property.name} for $${sellPrice}`;
+    const message = `${player.name} sold ${buildingName} on ${property.name} for ${sellPrice}`;
     gameRoom.gameLog.push(message);
 
     io.to(roomCode).emit("houseSold", {
@@ -979,6 +1211,113 @@ io.on("connection", (socket) => {
     console.log(`💰 ${player.name} sold ${buildingName} on ${property.name}`);
   });
 
+  socket.on("mortgageProperty", ({ roomCode, propertyPosition, playerId }) => {
+    const gameRoom = rooms.get(roomCode);
+
+    if (!gameRoom || !gameRoom.gameStarted) {
+      socket.emit("error", { message: "Invalid game state" });
+      return;
+    }
+
+    const player = gameRoom.players[playerId];
+    const property = gameRoom.properties[propertyPosition];
+
+    if (!player || !property) {
+      socket.emit("error", { message: "Invalid player or property" });
+      return;
+    }
+
+    if (property.owner !== playerId) {
+      socket.emit("error", { message: "You don't own this property" });
+      return;
+    }
+
+    if (property.mortgaged) {
+      socket.emit("error", { message: "Already mortgaged" });
+      return;
+    }
+
+    if (property.houses > 0) {
+      socket.emit("error", {
+        message: "Cannot mortgage property with buildings",
+      });
+      return;
+    }
+
+    const mortgageValue = Math.floor(property.price / 2);
+    player.money += mortgageValue;
+    property.mortgaged = true;
+
+    gameRoom.gameLog.push(
+      `${player.name} mortgaged ${property.name} for ${mortgageValue}`
+    );
+
+    io.to(roomCode).emit("propertyMortgaged", {
+      playerId: playerId,
+      playerName: player.name,
+      propertyPosition: propertyPosition,
+      propertyName: property.name,
+      mortgageValue: mortgageValue,
+      newMoney: player.money,
+    });
+
+    broadcastGameState(roomCode);
+  });
+
+  socket.on(
+    "unmortgageProperty",
+    ({ roomCode, propertyPosition, playerId }) => {
+      const gameRoom = rooms.get(roomCode);
+
+      if (!gameRoom || !gameRoom.gameStarted) {
+        socket.emit("error", { message: "Invalid game state" });
+        return;
+      }
+
+      const player = gameRoom.players[playerId];
+      const property = gameRoom.properties[propertyPosition];
+
+      if (!player || !property) {
+        socket.emit("error", { message: "Invalid player or property" });
+        return;
+      }
+
+      if (property.owner !== playerId) {
+        socket.emit("error", { message: "You don't own this property" });
+        return;
+      }
+
+      if (!property.mortgaged) {
+        socket.emit("error", { message: "Property not mortgaged" });
+        return;
+      }
+
+      const unmortgageCost = Math.floor(property.price * 0.55);
+      if (player.money < unmortgageCost) {
+        socket.emit("error", { message: "Not enough money to unmortgage" });
+        return;
+      }
+
+      player.money -= unmortgageCost;
+      property.mortgaged = false;
+
+      gameRoom.gameLog.push(
+        `${player.name} unmortgaged ${property.name} for ${unmortgageCost}`
+      );
+
+      io.to(roomCode).emit("propertyUnmortgaged", {
+        playerId: playerId,
+        playerName: player.name,
+        propertyPosition: propertyPosition,
+        propertyName: property.name,
+        unmortgageCost: unmortgageCost,
+        newMoney: player.money,
+      });
+
+      broadcastGameState(roomCode);
+    }
+  );
+
   socket.on("disconnect", () => {
     console.log("❌ User disconnected:", socket.id);
 
@@ -988,29 +1327,48 @@ io.on("connection", (socket) => {
       );
       if (playerIndex !== -1) {
         const playerName = room.players[playerIndex].name;
-        room.players.splice(playerIndex, 1);
 
-        if (room.players.length === 0) {
-          rooms.delete(roomCode);
-          console.log(`🗑️ Room ${roomCode} deleted`);
-        } else {
-          io.to(roomCode).emit("playerLeft", {
-            playerName: playerName,
-            players: room.players.map((p) => ({
-              id: p.id,
-              name: p.name,
-              piece: p.piece,
-              color: p.color,
-            })),
-          });
+        // Store disconnected player info for potential reconnection
+        disconnectedPlayers.set(socket.id, {
+          roomCode,
+          playerIndex,
+          timestamp: Date.now(),
+        });
 
-          if (room.gameStarted) {
-            room.gameStarted = false;
-            io.to(roomCode).emit("gameEnded", {
-              message: `${playerName} left. Game ended.`,
-            });
+        // Give them 60 seconds to reconnect
+        setTimeout(() => {
+          const disconnectInfo = disconnectedPlayers.get(socket.id);
+          if (disconnectInfo) {
+            disconnectedPlayers.delete(socket.id);
+
+            const currentRoom = rooms.get(roomCode);
+            if (currentRoom) {
+              currentRoom.players.splice(playerIndex, 1);
+
+              if (currentRoom.players.length === 0) {
+                rooms.delete(roomCode);
+                console.log(`🗑️ Room ${roomCode} deleted`);
+              } else {
+                io.to(roomCode).emit("playerLeft", {
+                  playerName: playerName,
+                  players: currentRoom.players.map((p) => ({
+                    id: p.id,
+                    name: p.name,
+                    piece: p.piece,
+                    color: p.color,
+                  })),
+                });
+
+                if (currentRoom.gameStarted) {
+                  currentRoom.gameStarted = false;
+                  io.to(roomCode).emit("gameEnded", {
+                    message: `${playerName} left. Game ended.`,
+                  });
+                }
+              }
+            }
           }
-        }
+        }, 60000);
       }
     });
   });
@@ -1020,13 +1378,32 @@ app.get("/health", (req, res) => {
   res.json({
     status: "ok",
     rooms: rooms.size,
+    activePlayers: Array.from(rooms.values()).reduce(
+      (sum, room) => sum + room.players.length,
+      0
+    ),
     timestamp: new Date().toISOString(),
+  });
+});
+
+app.get("/stats", (req, res) => {
+  const roomStats = Array.from(rooms.entries()).map(([code, room]) => ({
+    code,
+    players: room.players.length,
+    gameStarted: room.gameStarted,
+  }));
+
+  res.json({
+    totalRooms: rooms.size,
+    rooms: roomStats,
+    disconnectedPlayers: disconnectedPlayers.size,
   });
 });
 
 const PORT = process.env.PORT || 9000;
 server.listen(PORT, () => {
-  console.log(`🎲 Monopoly Server Running`);
+  console.log(`🎲 STARKCITY Monopoly Server Running`);
   console.log(`📡 Port: ${PORT}`);
   console.log(`🌐 Socket.IO Ready`);
+  console.log(`✨ Enhanced with all new features!`);
 });
