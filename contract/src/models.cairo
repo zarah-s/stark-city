@@ -10,6 +10,7 @@ pub struct Game {
     pub current_player: u8,
     pub player_count: u8,
     pub winner: ContractAddress,
+    pub turn_timeout: u8,
 }
 
 #[derive(Copy, Drop, Serde)]
@@ -24,6 +25,10 @@ pub struct Player {
     pub money: u32,
     pub piece: u8,
     pub is_active: bool,
+    pub bankrupt: bool,
+    pub in_jail: bool,
+    pub jail_turns: u8,
+    pub get_out_jail_free: u8,
 }
 
 #[derive(Copy, Drop, Serde)]
@@ -39,6 +44,7 @@ pub struct Property {
     pub rent_base: u32,
     pub house_price: u32,
     pub color_group: u8,
+    pub mortgaged: bool,
 }
 
 #[derive(Copy, Drop, Serde)]
