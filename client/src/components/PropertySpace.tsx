@@ -1,321 +1,205 @@
-import type { Player, Property } from "../utils/interfaces";
+// File: src/components/PropertySpace.tsx
+// Updated to match original board design
 
-export const PropertySpace = ({
-  prop,
-  players,
-}: {
+import React from "react";
+import type { Property, Player } from "../utils/interfaces";
+
+interface PropertySpaceProps {
   prop: Property;
   players: Player[];
-}) => {
-  const playersHere = players.filter((p) => p.position === prop.position);
+  onClick?: () => void;
+}
 
-  if (prop.type === "property") {
-    return (
-      <div className="h-full w-full bg-gradient-to-br from-gray-50 to-white border-2 border-gray-900 flex flex-col text-[10px] relative shadow-inner">
+export const PropertySpace: React.FC<PropertySpaceProps> = ({
+  prop,
+  players,
+  onClick,
+}) => {
+  // Get players on this space
+  const playersHere = players.filter(
+    (p) => p.position === prop.position && !p.bankrupt
+  );
+
+  // Determine if this is a corner space
+  const isCorner = [0, 10, 20, 30].includes(prop.position);
+
+  return (
+    <div
+      onClick={onClick}
+      className={`relative w-full h-full flex flex-col overflow-hidden cursor-pointer transition-all hover:opacity-80 ${
+        isCorner ? "bg-gray-900" : "bg-white"
+      }`}
+      style={{
+        border: "2px solid #000",
+      }}
+    >
+      {/* Property Color Bar (Top for properties) */}
+      {prop.color && prop.type === "property" && (
         <div
-          className={`${prop.color} h-6 w-full flex items-center justify-center text-white font-bold text-[8px]`}
+          className={`w-full ${isCorner ? "h-6" : "h-4 sm:h-5"} ${prop.color}`}
+        />
+      )}
+
+      {/* Main Content Area */}
+      <div
+        className={`flex-1 flex flex-col items-center justify-between p-0.5 sm:p-1 ${
+          isCorner ? "text-white" : "text-black"
+        }`}
+      >
+        {/* Property Name */}
+        <div
+          className={`font-bold text-center w-full ${
+            isCorner
+              ? "text-[0.5rem] sm:text-xs"
+              : "text-[0.4rem] sm:text-[0.55rem]"
+          }`}
+          style={{ lineHeight: "1.1" }}
         >
-          {prop.owner !== null && players[prop.owner] && (
-            <div
-              className={`w-2 h-2 rounded-full ${
-                players[prop.owner].color
-              } absolute top-1 ring-2 ring-white`}
-            ></div>
-          )}
+          {prop.name}
         </div>
-        <div className="flex-1 flex flex-col items-center justify-center p-1 text-center leading-tight">
-          <div className="font-bold">{prop.name.split(" ")[0]}</div>
-          <div className="font-bold">
-            {prop.name.split(" ").slice(1).join(" ")}
-          </div>
-          <div className="text-[9px] font-black mt-1 text-green-700">
+
+        {/* Price */}
+        {prop.price > 0 && (
+          <div
+            className={`font-black ${
+              isCorner
+                ? "text-yellow-400 text-[0.5rem] sm:text-xs"
+                : "text-gray-700 text-[0.4rem] sm:text-[0.5rem]"
+            }`}
+          >
             ${prop.price}
           </div>
-          {prop.houses > 0 && (
-            <div className="flex gap-0.5 mt-1">
-              {prop.houses === 5 ? (
-                <div className="text-red-600 text-xs animate-pulse">🏨</div>
-              ) : (
-                Array.from({ length: prop.houses }).map((_, i) => (
-                  <div key={i} className="text-green-600 text-[8px]">
-                    🏠
-                  </div>
-                ))
-              )}
+        )}
+
+        {/* Railroad/Utility Icons */}
+        {prop.type === "railroad" && (
+          <div className="text-lg sm:text-2xl my-1">🚂</div>
+        )}
+        {prop.type === "utility" && (
+          <div className="text-lg sm:text-2xl my-1">
+            {prop.name.includes("Electric") ? "💡" : "💧"}
+          </div>
+        )}
+
+        {/* Special Space Icons */}
+        {prop.name === "GO" && (
+          <div className="text-3xl sm:text-5xl font-black text-green-400">
+            →
+          </div>
+        )}
+        {prop.name === "Go To Jail" && (
+          <div className="text-2xl sm:text-4xl">👮</div>
+        )}
+        {prop.name === "Just Visiting" && (
+          <div className="text-xl sm:text-2xl">
+            <div className="text-orange-400">JUST</div>
+            <div className="text-orange-400">VISITING</div>
+          </div>
+        )}
+        {prop.name === "Free Parking" && (
+          <div className="text-3xl sm:text-5xl">🅿️</div>
+        )}
+        {prop.name === "Chance" && <div className="text-xl sm:text-3xl">?</div>}
+        {prop.name === "Community Chest" && (
+          <div className="text-xl sm:text-2xl">
+            <div className="text-blue-600">📦</div>
+          </div>
+        )}
+        {prop.name === "Income Tax" && (
+          <div className="text-center">
+            <div className="text-xs font-bold">INCOME</div>
+            <div className="text-xs font-bold">TAX</div>
+            <div className="text-xs font-black text-red-600">$200</div>
+          </div>
+        )}
+        {prop.name === "Luxury Tax" && (
+          <div className="text-center">
+            <div className="text-xs font-bold">LUXURY</div>
+            <div className="text-xs font-bold">TAX</div>
+            <div className="text-xs font-black text-red-600">$100</div>
+          </div>
+        )}
+
+        {/* Owner Indicator (Small piece at top) */}
+        {prop.owner !== null &&
+          players[prop.owner] &&
+          prop.type === "property" && (
+            <div
+              className={`absolute top-0 right-0 w-4 h-4 sm:w-5 sm:h-5 ${
+                players[prop.owner].color
+              } rounded-bl-lg flex items-center justify-center text-[0.5rem] sm:text-xs border-l-2 border-b-2 border-black`}
+            >
+              {players[prop.owner].piece}
+            </div>
+          )}
+
+        {/* Houses/Hotels Display */}
+        {prop.houses > 0 && (
+          <div className="absolute top-0 left-0 flex gap-0.5 p-0.5">
+            {prop.houses < 5 ? (
+              // Houses - Green boxes
+              Array.from({ length: prop.houses }).map((_, i) => (
+                <div
+                  key={i}
+                  className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-green-600 border border-green-800"
+                  title="House"
+                />
+              ))
+            ) : (
+              // Hotel - Red box
+              <div
+                className="w-3 h-3 sm:w-4 sm:h-4 bg-red-600 border-2 border-red-900"
+                title="Hotel"
+              />
+            )}
+          </div>
+        )}
+
+        {/* Mortgaged Overlay */}
+        {prop.mortgaged && (
+          <div className="absolute inset-0 bg-gray-500 bg-opacity-70 flex items-center justify-center">
+            <div className="transform -rotate-45 bg-red-600 text-white font-black text-[0.4rem] sm:text-xs px-1 sm:px-2 py-0.5">
+              MORTGAGED
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Players on this Space (Bottom) */}
+      {playersHere.length > 0 && (
+        <div
+          className={`absolute bottom-0 left-0 right-0 flex justify-center items-center gap-0.5 bg-black bg-opacity-50 ${
+            isCorner ? "h-6 sm:h-8" : "h-4 sm:h-5"
+          }`}
+        >
+          {playersHere.slice(0, 4).map((player) => (
+            <div
+              key={player.id}
+              className={`${
+                player.color
+              } rounded-full border border-white flex items-center justify-center ${
+                isCorner
+                  ? "w-5 h-5 sm:w-6 sm:h-6 text-xs sm:text-sm"
+                  : "w-3 h-3 sm:w-4 sm:h-4 text-[0.5rem] sm:text-xs"
+              }`}
+              title={player.name}
+            >
+              {player.piece}
+            </div>
+          ))}
+          {playersHere.length > 4 && (
+            <div
+              className={`bg-gray-600 rounded-full border border-white flex items-center justify-center ${
+                isCorner
+                  ? "w-5 h-5 sm:w-6 sm:h-6 text-xs"
+                  : "w-3 h-3 sm:w-4 sm:h-4 text-[0.5rem]"
+              }`}
+            >
+              +{playersHere.length - 4}
             </div>
           )}
         </div>
-        {playersHere.length > 0 && (
-          <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-0.5">
-            {playersHere.map((p) => (
-              <div
-                key={p.id}
-                className="text-2xl drop-shadow-2xl animate-bounce"
-              >
-                {p.piece}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  if (prop.type === "railroad") {
-    return (
-      <div className="h-full w-full bg-gradient-to-br from-gray-800 to-gray-900 border-2 border-gray-900 flex flex-col items-center justify-center text-[10px] p-1 relative shadow-inner">
-        <div className="font-bold text-center leading-tight text-[9px] text-yellow-400">
-          {prop.name}
-        </div>
-        <div className="text-2xl">🚂</div>
-        <div className="font-bold text-[9px] text-green-400">${prop.price}</div>
-        {prop.owner !== null && players[prop.owner] && (
-          <div
-            className={`w-2 h-2 rounded-full ${
-              players[prop.owner].color
-            } absolute top-1 ring-2 ring-white`}
-          ></div>
-        )}
-        {playersHere.length > 0 && (
-          <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-0.5">
-            {playersHere.map((p) => (
-              <div
-                key={p.id}
-                className="text-2xl drop-shadow-2xl animate-bounce"
-              >
-                {p.piece}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  if (prop.type === "utility") {
-    return (
-      <div className="h-full w-full bg-gradient-to-br from-blue-100 to-blue-200 border-2 border-gray-900 flex flex-col items-center justify-center text-[10px] p-1 relative shadow-inner">
-        <div className="font-bold text-center leading-tight text-[9px] text-blue-900">
-          {prop.name}
-        </div>
-        <div className="text-2xl">
-          {prop.name.includes("Electric") ? "💡" : "💧"}
-        </div>
-        <div className="font-bold text-[9px] text-green-700">${prop.price}</div>
-        {prop.owner !== null && players[prop.owner] && (
-          <div
-            className={`w-2 h-2 rounded-full ${
-              players[prop.owner].color
-            } absolute top-1 ring-2 ring-white`}
-          ></div>
-        )}
-        {playersHere.length > 0 && (
-          <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-0.5">
-            {playersHere.map((p) => (
-              <div
-                key={p.id}
-                className="text-2xl drop-shadow-2xl animate-bounce"
-              >
-                {p.piece}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  if (prop.name === "GO") {
-    return (
-      <div className="h-full w-full bg-gradient-to-br from-green-500 via-emerald-600 to-green-700 border-2 border-gray-900 flex flex-col items-center justify-center text-white font-black relative shadow-lg">
-        <div className="text-3xl rotate-180 animate-pulse">→</div>
-        <div className="text-xs">GO</div>
-        <div className="text-[8px]">COLLECT $200</div>
-        {playersHere.length > 0 && (
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
-            {playersHere.map((p) => (
-              <div
-                key={p.id}
-                className="text-3xl drop-shadow-2xl animate-bounce"
-              >
-                {p.piece}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  if (prop.name === "Just Visiting") {
-    return (
-      <div className="h-full w-full bg-gradient-to-br from-orange-400 to-orange-600 border-2 border-gray-900 relative shadow-lg">
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-white font-black">
-          <div className="text-xs">JUST</div>
-          <div className="text-xs">VISITING</div>
-        </div>
-        <div className="absolute top-1 right-1 text-3xl animate-pulse">🚔</div>
-        {playersHere.length > 0 && (
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10">
-            {playersHere.map((p) => (
-              <div
-                key={p.id}
-                className="text-3xl drop-shadow-2xl animate-bounce"
-              >
-                {p.piece}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  if (prop.name === "Free Parking") {
-    return (
-      <div className="h-full w-full bg-gradient-to-br from-purple-500 to-purple-700 border-2 border-gray-900 flex flex-col items-center justify-center text-white font-black relative shadow-lg">
-        <div className="text-2xl animate-bounce">🅿️</div>
-        <div className="text-[10px]">FREE</div>
-        <div className="text-[10px]">PARKING</div>
-        {playersHere.length > 0 && (
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
-            {playersHere.map((p) => (
-              <div
-                key={p.id}
-                className="text-3xl drop-shadow-2xl animate-bounce"
-              >
-                {p.piece}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  if (prop.name === "Go To Jail") {
-    return (
-      <div className="h-full w-full bg-gradient-to-br from-red-600 to-red-800 border-2 border-gray-900 flex flex-col items-center justify-center text-white font-black relative shadow-lg">
-        <div className="text-2xl animate-pulse">👮</div>
-        <div className="text-[9px]">GO TO</div>
-        <div className="text-[9px]">JAIL</div>
-        {playersHere.length > 0 && (
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
-            {playersHere.map((p) => (
-              <div
-                key={p.id}
-                className="text-3xl drop-shadow-2xl animate-bounce"
-              >
-                {p.piece}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  if (prop.name === "Community Chest") {
-    return (
-      <div className="h-full w-full bg-gradient-to-br from-amber-100 to-amber-200 border-2 border-gray-900 flex flex-col items-center justify-center relative shadow-inner">
-        <div className="text-2xl">📦</div>
-        <div className="text-[8px] font-black text-center leading-tight text-amber-900">
-          COMMUNITY
-          <br />
-          CHEST
-        </div>
-        {playersHere.length > 0 && (
-          <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-0.5">
-            {playersHere.map((p) => (
-              <div
-                key={p.id}
-                className="text-2xl drop-shadow-2xl animate-bounce"
-              >
-                {p.piece}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  if (prop.name === "Chance") {
-    return (
-      <div className="h-full w-full bg-gradient-to-br from-pink-100 to-pink-200 border-2 border-gray-900 flex flex-col items-center justify-center relative shadow-inner">
-        <div className="text-2xl animate-spin-slow">❓</div>
-        <div className="text-[9px] font-black text-pink-900">CHANCE</div>
-        {playersHere.length > 0 && (
-          <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-0.5">
-            {playersHere.map((p) => (
-              <div
-                key={p.id}
-                className="text-2xl drop-shadow-2xl animate-bounce"
-              >
-                {p.piece}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  if (prop.name === "Income Tax") {
-    return (
-      <div className="h-full w-full bg-gradient-to-br from-red-100 to-red-200 border-2 border-gray-900 flex flex-col items-center justify-center relative shadow-inner">
-        <div className="text-2xl">💰</div>
-        <div className="text-[8px] font-black text-center leading-tight text-red-900">
-          INCOME
-          <br />
-          TAX
-          <br />
-          $200
-        </div>
-        {playersHere.length > 0 && (
-          <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-0.5">
-            {playersHere.map((p) => (
-              <div
-                key={p.id}
-                className="text-2xl drop-shadow-2xl animate-bounce"
-              >
-                {p.piece}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  if (prop.name === "Luxury Tax") {
-    return (
-      <div className="h-full w-full bg-gradient-to-br from-indigo-100 to-indigo-200 border-2 border-gray-900 flex flex-col items-center justify-center relative shadow-inner">
-        <div className="text-2xl animate-pulse">💎</div>
-        <div className="text-[8px] font-black text-center leading-tight text-indigo-900">
-          LUXURY
-          <br />
-          TAX
-          <br />
-          $100
-        </div>
-        {playersHere.length > 0 && (
-          <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-0.5">
-            {playersHere.map((p) => (
-              <div
-                key={p.id}
-                className="text-2xl drop-shadow-2xl animate-bounce"
-              >
-                {p.piece}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  return (
-    <div className="h-full w-full bg-white border-2 border-gray-900"></div>
+      )}
+    </div>
   );
 };

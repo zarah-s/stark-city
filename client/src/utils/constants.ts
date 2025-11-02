@@ -1,5 +1,141 @@
-import type { Property } from "./interfaces";
+import type { ChanceCard, Property } from "./interfaces";
 import manifest from "./manifest_sepolia.json";
+
+export const SOCKET_SERVER_URL = "http://localhost:9000";
+export const WORLD_ADDRESS = manifest.contracts[0].address;
+export const AVAILABLE_PIECES = [
+  "🚗",
+  "🎩",
+  "🚢",
+  "🐕",
+  "🐈",
+  "👞",
+  "🎸",
+  "⚓",
+];
+
+export const CHANCE_CARDS: ChanceCard[] = [
+  {
+    type: "money",
+    title: "BANK ERROR!",
+    description: "Bank error in your favor. Collect $200",
+    amount: 200,
+  },
+  {
+    type: "money",
+    title: "DOCTOR'S FEE",
+    description: "Doctor's fee. Pay $50",
+    amount: -50,
+  },
+  {
+    type: "money",
+    title: "SALE OF STOCK",
+    description: "From sale of stock you get $50",
+    amount: 50,
+  },
+  {
+    type: "jail_free",
+    title: "GET OUT OF JAIL FREE",
+    description: "This card may be kept until needed",
+  },
+  {
+    type: "jail",
+    title: "GO TO JAIL",
+    description: "Go directly to jail. Do not pass GO. Do not collect $200",
+  },
+  {
+    type: "move",
+    title: "ADVANCE TO GO",
+    description: "Advance to GO. Collect $200",
+    position: 0,
+  },
+  {
+    type: "money",
+    title: "LUXURY TAX",
+    description: "Pay poor tax of $15",
+    amount: -15,
+  },
+  {
+    type: "money",
+    title: "BUILDING LOAN",
+    description: "Your building loan matures. Collect $150",
+    amount: 150,
+  },
+  {
+    type: "money",
+    title: "SPEEDING FINE",
+    description: "Speeding fine. Pay $15",
+    amount: -15,
+  },
+  {
+    type: "money",
+    title: "CROSSWORD COMPETITION",
+    description: "You have won a crossword competition. Collect $100",
+    amount: 100,
+  },
+];
+
+export const COMMUNITY_CHEST_CARDS: ChanceCard[] = [
+  {
+    type: "money",
+    title: "LIFE INSURANCE",
+    description: "Life insurance matures. Collect $100",
+    amount: 100,
+  },
+  {
+    type: "money",
+    title: "HOSPITAL FEES",
+    description: "Doctor's fees. Pay $50",
+    amount: -50,
+  },
+  {
+    type: "money",
+    title: "SCHOOL FEES",
+    description: "Pay school fees of $50",
+    amount: -50,
+  },
+  {
+    type: "money",
+    title: "CONSULTANCY FEE",
+    description: "Receive $25 consultancy fee",
+    amount: 25,
+  },
+  {
+    type: "jail_free",
+    title: "GET OUT OF JAIL FREE",
+    description: "This card may be kept until needed",
+  },
+  {
+    type: "jail",
+    title: "GO TO JAIL",
+    description: "Go directly to jail. Do not pass GO. Do not collect $200",
+  },
+  {
+    type: "money",
+    title: "TAX REFUND",
+    description: "Income tax refund. Collect $20",
+    amount: 20,
+  },
+  {
+    type: "money",
+    title: "BIRTHDAY",
+    description: "It is your birthday. Collect $10 from each player",
+    amount: 10,
+  },
+  {
+    type: "money",
+    title: "INHERITANCE",
+    description: "You inherit $100",
+    amount: 100,
+  },
+  {
+    type: "money",
+    title: "BEAUTY CONTEST",
+    description: "You won second prize in a beauty contest. Collect $10",
+    amount: 10,
+  },
+];
+
 export const PROPERTIES: Property[] = [
   {
     name: "GO",
@@ -21,6 +157,7 @@ export const PROPERTIES: Property[] = [
     houses: 0,
     type: "property",
     housePrice: 50,
+    mortgaged: false,
   },
   {
     name: "Community Chest",
@@ -42,6 +179,7 @@ export const PROPERTIES: Property[] = [
     houses: 0,
     type: "property",
     housePrice: 50,
+    mortgaged: false,
   },
   {
     name: "Income Tax",
@@ -73,6 +211,7 @@ export const PROPERTIES: Property[] = [
     houses: 0,
     type: "property",
     housePrice: 50,
+    mortgaged: false,
   },
   {
     name: "Chance",
@@ -94,6 +233,7 @@ export const PROPERTIES: Property[] = [
     houses: 0,
     type: "property",
     housePrice: 50,
+    mortgaged: false,
   },
   {
     name: "Connecticut Avenue",
@@ -105,6 +245,7 @@ export const PROPERTIES: Property[] = [
     houses: 0,
     type: "property",
     housePrice: 50,
+    mortgaged: false,
   },
   {
     name: "Just Visiting",
@@ -126,6 +267,7 @@ export const PROPERTIES: Property[] = [
     houses: 0,
     type: "property",
     housePrice: 100,
+    mortgaged: false,
   },
   {
     name: "Electric Company",
@@ -147,6 +289,7 @@ export const PROPERTIES: Property[] = [
     houses: 0,
     type: "property",
     housePrice: 100,
+    mortgaged: false,
   },
   {
     name: "Virginia Avenue",
@@ -158,6 +301,7 @@ export const PROPERTIES: Property[] = [
     houses: 0,
     type: "property",
     housePrice: 100,
+    mortgaged: false,
   },
   {
     name: "Pennsylvania Railroad",
@@ -179,6 +323,7 @@ export const PROPERTIES: Property[] = [
     houses: 0,
     type: "property",
     housePrice: 100,
+    mortgaged: false,
   },
   {
     name: "Community Chest",
@@ -200,6 +345,7 @@ export const PROPERTIES: Property[] = [
     houses: 0,
     type: "property",
     housePrice: 100,
+    mortgaged: false,
   },
   {
     name: "New York Avenue",
@@ -211,6 +357,7 @@ export const PROPERTIES: Property[] = [
     houses: 0,
     type: "property",
     housePrice: 100,
+    mortgaged: false,
   },
   {
     name: "Free Parking",
@@ -232,6 +379,7 @@ export const PROPERTIES: Property[] = [
     houses: 0,
     type: "property",
     housePrice: 150,
+    mortgaged: false,
   },
   {
     name: "Chance",
@@ -253,6 +401,7 @@ export const PROPERTIES: Property[] = [
     houses: 0,
     type: "property",
     housePrice: 150,
+    mortgaged: false,
   },
   {
     name: "Illinois Avenue",
@@ -264,6 +413,7 @@ export const PROPERTIES: Property[] = [
     houses: 0,
     type: "property",
     housePrice: 150,
+    mortgaged: false,
   },
   {
     name: "B. & O. Railroad",
@@ -285,6 +435,7 @@ export const PROPERTIES: Property[] = [
     houses: 0,
     type: "property",
     housePrice: 150,
+    mortgaged: false,
   },
   {
     name: "Ventnor Avenue",
@@ -296,6 +447,7 @@ export const PROPERTIES: Property[] = [
     houses: 0,
     type: "property",
     housePrice: 150,
+    mortgaged: false,
   },
   {
     name: "Water Works",
@@ -317,6 +469,7 @@ export const PROPERTIES: Property[] = [
     houses: 0,
     type: "property",
     housePrice: 150,
+    mortgaged: false,
   },
   {
     name: "Go To Jail",
@@ -338,6 +491,7 @@ export const PROPERTIES: Property[] = [
     houses: 0,
     type: "property",
     housePrice: 200,
+    mortgaged: false,
   },
   {
     name: "North Carolina Avenue",
@@ -349,6 +503,7 @@ export const PROPERTIES: Property[] = [
     houses: 0,
     type: "property",
     housePrice: 200,
+    mortgaged: false,
   },
   {
     name: "Community Chest",
@@ -370,6 +525,7 @@ export const PROPERTIES: Property[] = [
     houses: 0,
     type: "property",
     housePrice: 200,
+    mortgaged: false,
   },
   {
     name: "Short Line",
@@ -401,6 +557,7 @@ export const PROPERTIES: Property[] = [
     houses: 0,
     type: "property",
     housePrice: 200,
+    mortgaged: false,
   },
   {
     name: "Luxury Tax",
@@ -422,25 +579,6 @@ export const PROPERTIES: Property[] = [
     houses: 0,
     type: "property",
     housePrice: 200,
+    mortgaged: false,
   },
 ];
-
-export const AVAILABLE_PIECES = [
-  "🚗",
-  "🎩",
-  "🚢",
-  "🐕",
-  "🐈",
-  "👞",
-  "🎸",
-  "⚓",
-];
-export const PLAYER_COLORS = [
-  "bg-blue-600",
-  "bg-red-600",
-  "bg-green-600",
-  "bg-yellow-600",
-];
-
-export const SOCKET_SERVER_URL = "https://starkcity.onrender.com";
-export const WORLD_ADDRESS = manifest.contracts[0].address;
