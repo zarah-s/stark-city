@@ -1,8 +1,4 @@
-# 🏙️ STARKCITY - Complete Blockchain Monopoly Game
-
-## 📦 Complete Synchronized Package
-
-### ✨ Features Implemented
+# 🏙️ STARKCITY
 
 #### Core Game Mechanics
 
